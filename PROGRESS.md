@@ -454,6 +454,24 @@ token's role menu, Track from a repository's menu, Load More, the last row
 fetching the next page) — a scripted launch cannot click. Light mode not
 checked.
 
+## Changes since last view
+
+All Changes / Since Last View above the file list (⌘5, `--since-last-view on`
+in a snapshot run), once a PR has gained commits since the reviewer last
+opened it. Rebases and merges of the base branch are replayed away with
+`git merge-tree`, so only the author's change shows. `review show <pr>
+--since <sha>` prints the same from the CLI. See plans/checkout-and-diff.md.
+
+**Verified:** `review show KevinMcHugh-soda/review#12 --since 9529b67` lists
+only PROGRESS.md, −1 — exactly the PR's second commit. Rendered both modes on
+review#12 with notes seeded to that commit. Tests cover added commits, a
+rebase (the base's new file is left out), and a conflicted replay (flagged).
+**Tests: 164.**
+
+**Not yet:** the comparison starts only after a PR has been opened once with
+this build. GitHub's own last-view state is not readable through its API; the
+commit of the reviewer's last submitted review could seed it.
+
 ## What next
 
 1. The two review comments on review#1: remove `SplitCodeView`'s observers in
