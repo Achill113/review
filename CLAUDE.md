@@ -48,12 +48,17 @@ not exist here, so never reach for it. `swift build` compiles; `build.sh` bundle
 
 * `make check` — compile only; the fast gate to run after every change
 * `make test` — `swift test`; covers the logic targets without launching a GUI
-* `make run` — build, bundle, sign, launch
+* `make run` — build, bundle, sign, launch `build/Review Dev.app`
+* **Two copies of the app.** Everything you build is the dev variant, "Review Dev": its own bundle
+  id, `review-dev://` scheme, DEV icon and data folder (`~/Library/Application Support/Review Dev`).
+  The reviewer's copy is `/Applications/Review.app`, built from `origin/main` by `make install`.
+  **Never run `make install`, and never quit, launch or open `/Applications/Review.app`** — it is
+  the one the reviewer is using. See plans/build-system.md.
 * `make cli && ./.build/debug/review doctor` — confirms every external tool is found
 * `./.build/debug/review show <pr> [path]` — loads a PR exactly as the app does, headless
 * **Look at UI changes.** `screencapture` from an agent shell sees only the desktop (no Screen
   Recording permission), so the app renders its own window instead:
-  `open -n --env REVIEW_SNAPSHOT=/path/out.png build/Review.app --args --open <pr> --file <path> [--mode diff|split|file]`
+  `open -n --env REVIEW_SNAPSHOT=/path/out.png "build/Review Dev.app" --args --open <pr> --file <path> [--mode diff|split|file]`
   writes a PNG (plus `-sheet.png` / `-popover.png` when one is up) once loading settles and quits.
   Launch through `open`, not by running the binary: run directly from an agent shell, the app
   can come up with no window at all. Every option must be a `--flag value` pair — AppKit treats

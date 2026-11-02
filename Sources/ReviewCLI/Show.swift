@@ -9,7 +9,7 @@ import ReviewKit
 struct Show: AsyncParsableCommand {
     static let configuration = CommandConfiguration(
         abstract: "Fetch a pull request and list its files, or print one file's diff.",
-        discussion: "The first run for a repository clones it into ~/Library/Application Support/Review."
+        discussion: "The first run for a repository clones it into ~/Library/Application Support/Review (Review Dev for a dev build)."
     )
 
     @Argument(help: "A pull request URL or owner/repo#123.")

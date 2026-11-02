@@ -22,12 +22,19 @@ with Command Line Tools only.
 ```sh
 make check      # compile + layering gate
 make test       # swift test, no GUI needed
-make run        # build, bundle, sign, launch
+make run        # build, bundle, sign, launch "Review Dev"
 make cli        # the companion `review` command-line tool
+make install    # build origin/main as /Applications/Review.app, and relaunch it
 ```
 
+A build from a checkout is **Review Dev** — DEV on its icon, its own settings and
+data — so testing a change never disturbs the copy you review with. That copy is
+`/Applications/Review.app`, and only `make install` replaces it: it builds
+`origin/main` in a worktree of its own, whatever you have checked out, quits the
+running Review and opens the new one.
+
 ```sh
-review open <pr>                 # open it in Review.app (after make install or make register)
+review open <pr>                 # open it in Review.app (a dev build's CLI opens Review Dev)
 review show <pr>                 # fetch a PR and list its files
 review show <pr> <path> [--file] [--spans]
 review threads <pr>              # the review threads already on it

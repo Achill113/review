@@ -7,10 +7,15 @@
 // CoreGraphics, no assets, no dependencies — runs under plain `swift`. The
 // Makefile runs `iconutil -c icns build/AppIcon.iconset` on the PNGs this
 // writes.
+//
+// `--dev` draws the dev variant's icon into build/AppIconDev.iconset: the same
+// page with an orange DEV band across the foot, so the copy built from a
+// working checkout is never mistaken for the installed one in the Dock.
 
 import AppKit
 
-let iconsetDir = "build/AppIcon.iconset"
+let isDev = CommandLine.arguments.contains("--dev")
+let iconsetDir = isDev ? "build/AppIconDev.iconset" : "build/AppIcon.iconset"
 try? FileManager.default.createDirectory(
     atPath: iconsetDir, withIntermediateDirectories: true)
 
@@ -104,8 +109,25 @@ func render(pixels: Int) -> Data {
         ctx.fillPath()
     }
 
+    if isDev { drawDevBand(in: tile, pixels: pixels, context: ctx) }
+
     NSGraphicsContext.restoreGraphicsState()
     return rep.representation(using: .png, properties: [:])!
+}
+
+/// An orange band across the foot of the tile, lettered DEV where there is
+/// room to read it. Drawn while the tile's rounded clip is still in force.
+func drawDevBand(in tile: CGRect, pixels: Int, context ctx: CGContext) {
+    let band = CGRect(x: tile.minX, y: tile.minY, width: tile.width, height: tile.height * 0.26)
+    ctx.setFillColor(CGColor(red: 0.96, green: 0.55, blue: 0.13, alpha: 1))
+    ctx.fill(band)
+    guard pixels >= 64 else { return }
+    let font = NSFont.systemFont(ofSize: band.height * 0.62, weight: .heavy)
+    let text = NSAttributedString(
+        string: "DEV",
+        attributes: [.font: font, .foregroundColor: NSColor.white, .kern: band.height * 0.06])
+    let size = text.size()
+    text.draw(at: CGPoint(x: band.midX - size.width / 2, y: band.midY - size.height / 2))
 }
 
 for variant in variants {

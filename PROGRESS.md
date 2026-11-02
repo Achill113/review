@@ -670,3 +670,19 @@ the card's snapshot from its last render, so it reads one keystroke behind.
 Handed older text than it holds, the editor replaces its contents, which puts
 the cursor at the end; typing at the end hid it. The editor now binds to
 `$session[bodyOf: id]`, which reads the session's copy.
+
+## Dev and installed copies
+
+Agents' test builds kept restarting or overlapping the copy the reviewer was
+using, and Spotlight found whichever build was registered last: every build
+was `Review.app` with one bundle id and one data folder. Now a checkout builds
+**Review Dev** (`dev.review.app.dev`, `review-dev://`, DEV icon,
+`Application Support/Review Dev`), and `make install` runs `scripts/promote.sh`,
+which builds `origin/main` in its own worktree and replaces
+`/Applications/Review.app`. The About panel shows the commit. See
+plans/build-system.md.
+
+Verified: both variants build with the right id, name, scheme and data folder
+(`strings` on each CLI); a dev snapshot launch opened with an empty data folder
+of its own. **Not yet run end to end:** `make install` itself, which is the
+reviewer's to run — the first one after merge does a full release build.

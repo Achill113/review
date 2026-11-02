@@ -1,11 +1,11 @@
 # Review — a native macOS app for reviewing pull requests
 #
 # Quick start:
-#   make           # debug-builds via SwiftPM into ./build/Review.app
-#   make run       # build + launch
+#   make           # debug-builds via SwiftPM into "./build/Review Dev.app"
+#   make run       # build + launch the dev copy
 #   make check     # compile only, no bundling/signing (agent / CI gate)
 #   make test      # run the SwiftPM test suite
-#   make install   # copy to /Applications/ and register with LaunchServices
+#   make install   # build origin/main as Review.app into /Applications/
 #   make help      # full target list
 #
 # Build is driven by `swift build` + ./build.sh — NO Xcode IDE, NO
@@ -14,7 +14,11 @@
 # signed-and-stapled release zip once signing identities are configured.
 
 CONFIG       := debug
-APP          := build/Review.app
+# dev: "Review Dev.app", its own bundle id, URL scheme and data folder, so a
+# build from a working checkout never touches the installed copy. Only
+# scripts/promote.sh (make install) builds VARIANT=installed.
+VARIANT      ?= dev
+APP          := build/$(if $(filter installed,$(VARIANT)),Review,Review Dev).app
 LSREGISTER   := /System/Library/Frameworks/CoreServices.framework/Versions/Current/Frameworks/LaunchServices.framework/Versions/Current/Support/lsregister
 MIN_MACOS    := 15
 MIN_SWIFT    := 6.0
@@ -66,7 +70,7 @@ all: build
 
 help:
 	@echo "Build:"
-	@echo "  make / build      Build $(CONFIG) into ./$(APP)  (default)"
+	@echo "  make / build      Build $(CONFIG) into ./$(APP)  (default; VARIANT=$(VARIANT))"
 	@echo "  check             Compile only (swift build) — no bundle/sign; CI/agent gate"
 	@echo "  lint-layers       Assert no SwiftUI/AppKit in the logic targets"
 	@echo "  cli               Build the review command-line tool"
@@ -74,15 +78,15 @@ help:
 	@echo "  sign-cert         One-time: create the review-dev signing identity"
 	@echo "  test              Run the SwiftPM test suite"
 	@echo "  release           Build release into ./$(APP)"
-	@echo "  run               Build and launch $(APP_NAME)"
+	@echo "  run               Build and launch $(APP)"
 	@echo "  icon              Regenerate build/AppIcon.icns from scripts/make-icon.swift"
 	@echo "  clean             Remove ./build/ ./.build/ ./dist/"
 	@echo "  deps              Verify build prerequisites (auto-run before build)"
 	@echo ""
 	@echo "Local install:"
-	@echo "  install           Copy $(APP_NAME).app to /Applications/ and register it"
+	@echo "  install           Build origin/main as $(APP_NAME).app into /Applications/ (scripts/promote.sh)"
 	@echo "  uninstall         Remove /Applications/$(APP_NAME).app"
-	@echo "  register          Refresh LaunchServices for ./$(APP)"
+	@echo "  register          Register ./$(APP) with LaunchServices (for review-dev:// links)"
 	@echo ""
 	@echo "Release pipeline (require an exact 'vX.Y.Z' git tag + signing identity):"
 	@echo "  notary-setup      One-time: store notary creds in keychain ($(NOTARY_PROFILE))"
@@ -123,23 +127,29 @@ deps:
 # ---------------------------------------------------------------------------
 
 ICON_SCRIPT := scripts/make-icon.swift
-APP_ICON    := build/AppIcon.icns
+APP_ICON    := build/$(if $(filter installed,$(VARIANT)),AppIcon,AppIconDev).icns
 
 # App icon: regenerated when the script changes. The script renders the icon
 # at every macOS size and iconutil packages them.
-$(APP_ICON): $(ICON_SCRIPT)
+build/AppIcon.icns: $(ICON_SCRIPT)
 	@mkdir -p build
 	@swift $(ICON_SCRIPT)
-	@iconutil -c icns build/AppIcon.iconset -o $(APP_ICON)
-	@echo "✓ $(APP_ICON)"
+	@iconutil -c icns build/AppIcon.iconset -o $@
+	@echo "✓ $@"
+
+build/AppIconDev.icns: $(ICON_SCRIPT)
+	@mkdir -p build
+	@swift $(ICON_SCRIPT) --dev
+	@iconutil -c icns build/AppIconDev.iconset -o $@
+	@echo "✓ $@"
 
 icon: $(APP_ICON)
 
 build: deps $(APP_ICON)
-	SIGN_IDENTITY="$(DEV_IDENTITY)" PROVISION_PROFILE="$(PROVISION_PROFILE)" VERSION="$(VERSION)" ./build.sh $(CONFIG)
+	SIGN_IDENTITY="$(DEV_IDENTITY)" PROVISION_PROFILE="$(PROVISION_PROFILE)" VERSION="$(VERSION)" VARIANT="$(VARIANT)" COMMIT="$(COMMIT)" ./build.sh $(CONFIG)
 
 release: deps $(APP_ICON)
-	SIGN_IDENTITY="$(DEV_IDENTITY)" PROVISION_PROFILE="$(PROVISION_PROFILE)" VERSION="$(VERSION)" ./build.sh release
+	SIGN_IDENTITY="$(DEV_IDENTITY)" PROVISION_PROFILE="$(PROVISION_PROFILE)" VERSION="$(VERSION)" VARIANT="$(VARIANT)" COMMIT="$(COMMIT)" ./build.sh release
 
 # SwiftUI is a system framework, so nothing structurally stops `import SwiftUI`
 # from appearing in ReviewLSP. Grep for it: the whole point of the layering
@@ -204,13 +214,10 @@ install-cli: cli
 sign-cert:
 	./scripts/make-signing-cert.sh $(DEV_IDENTITY)
 
-install: build
-	@if [ ! -d "$(APP)" ]; then echo "✗ $(APP) missing — build failed?"; exit 1; fi
-	rm -rf /Applications/$(APP_NAME).app
-	cp -R "$(APP)" /Applications/
-	@echo "✓ copied to /Applications/$(APP_NAME).app"
-	$(LSREGISTER) -f /Applications/$(APP_NAME).app
-	@echo "✓ registered /Applications/$(APP_NAME).app with LaunchServices"
+# Promote: build origin/main — never this checkout — as the installed variant
+# and replace /Applications/Review.app. For the reviewer to run, not agents.
+install:
+	./scripts/promote.sh
 
 uninstall:
 	@if [ -d /Applications/$(APP_NAME).app ]; then \
@@ -246,6 +253,9 @@ dist: check-version clean release sign zip-notary notarize staple zip-release ch
 	@echo "  next: make github-release   (or upload $(RELEASE_ZIP) manually)"
 
 check-version:
+	@if [ "$(VARIANT)" != installed ]; then \
+	  echo "✗ make dist ships the installed app: make dist VARIANT=installed"; exit 1; \
+	fi
 	@if [ -z "$(VERSION)" ]; then \
 	  echo "✗ VERSION is empty — no exact vX.Y.Z git tag at HEAD and no VERSION file."; \
 	  echo "  Tag the release first:   git tag v0.1.0 && make dist"; \
