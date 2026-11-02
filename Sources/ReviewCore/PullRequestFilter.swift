@@ -94,9 +94,13 @@ public struct PullRequestFilter: Hashable, Sendable, Codable {
     /// not a login yet — half typed, say — are left out rather than sent.
     public func searchQuery(scope: [String]) -> String {
         let keywords = keywords.trimmingCharacters(in: .whitespacesAndNewlines)
-        let terms = ["is:pr"] + scope + stateQualifiers + readinessQualifiers + reviewQualifiers
-            + people.compactMap(\.qualifier) + [sortQualifier]
-            + (keywords.isEmpty ? [] : ["in:title", keywords])
+        // Built in steps: one long `+` chain is past what Swift 6.1 will
+        // type-check in reasonable time.
+        var terms = ["is:pr"] + scope
+        terms += stateQualifiers + readinessQualifiers + reviewQualifiers
+        terms += people.compactMap(\.qualifier)
+        terms.append(sortQualifier)
+        if !keywords.isEmpty { terms += ["in:title", keywords] }
         return terms.joined(separator: " ")
     }
 
