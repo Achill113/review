@@ -23,9 +23,9 @@ public struct CheckoutStore: Sendable {
         self.remoteURL = remoteURL
     }
 
-    /// `~/Library/Application Support/Review`.
+    /// `~/Library/Application Support/Review`, or `Review Dev` for a dev build.
     public static var defaultRoot: URL {
-        URL.applicationSupportDirectory.appendingPathComponent("Review", isDirectory: true)
+        URL.applicationSupportDirectory.appendingPathComponent(AppVariant.current.appName, isDirectory: true)
     }
 
     public func repositoryPath(for reference: PullRequestReference) -> URL {

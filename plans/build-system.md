@@ -9,8 +9,8 @@ provider (`swift`, `codesign`, `notarytool`, `stapler`).
 - **`Package.swift`** — library targets for the logic, two executable
   targets (`ReviewApp`, `review`), one test target per library. Swift 6
   language mode. See architecture.md for the graph.
-- **`build.sh`** — `swift build` → assemble `build/Review.app` (Info.plist
-  with `__SHORT_VERSION__`/`__BUILD_VERSION__` substituted, `PkgInfo`, any
+- **`build.sh`** — `swift build` → assemble `build/Review Dev.app` or `build/Review.app` (Info.plist
+  with its `__…__` placeholders substituted, `PkgInfo`, any
   dependency `*.bundle`s copied into `Contents/Resources`, the icon) → codesign.
   Falls back to ad-hoc signing (`-`) when no real identity is available, so
   `make run` always works on a bare machine.
@@ -41,6 +41,46 @@ doing it for you:
   route to a sensible default, not a dead feature — e.g. a one-shot location
   request that yields `nil` falls back to a configured location.
 
+## Two copies: dev and installed
+
+The reviewer uses the app while agents build and test it, so there are two
+variants, chosen by `VARIANT` (`build.sh`, `make`):
+
+|                    | dev (default)                     | installed                       |
+|--------------------|-----------------------------------|---------------------------------|
+| bundle             | `build/Review Dev.app`            | `/Applications/Review.app`      |
+| bundle id          | `dev.review.app.dev`              | `dev.review.app`                |
+| URL scheme         | `review-dev://`                   | `review://`                     |
+| data               | `Application Support/Review Dev`  | `Application Support/Review`    |
+| icon               | DEV band (`make-icon.swift --dev`) | plain                           |
+| built by           | any `make` / `make run`           | `make install` only             |
+
+Separate bundle ids keep LaunchServices, Spotlight, `open` and UserDefaults
+apart; the separate data folder keeps a test run off the reviewer's clones,
+drafts, notes and open workspace. The app and CLI learn their variant at
+compile time: `build.sh` passes `-Xswiftc -DREVIEW_INSTALLED` for the
+installed one, and `AppVariant.current` reads it. So `./.build/debug/review`
+is a dev CLI and reads the dev data; the `review` inside the installed bundle
+reads the reviewer's. `build.sh` and `AppVariant` must agree on the names.
+
+Both stamp `ReviewCommit` into Info.plist (`+dirty` for uncommitted changes),
+and the About panel shows it as the build: "Version 0.1.0 (2f3ee44)".
+
+**`make install` → `scripts/promote.sh`.** It fetches `origin/main` into its
+own worktree at `~/Library/Caches/Review/promote` (kept between runs, so builds
+are incremental), builds a release there as the installed variant, asks any
+running `Review.app` to quit through AppleScript, replaces
+`/Applications/Review.app`, re-registers it and opens it. The checkout it is run
+from never matters. It lists older builds Spotlight can still find under the
+installed id — dev builds from before the split were `build/Review.app` with
+that id — for the reviewer to delete; a dev build in a checkout removes its own.
+
+Not built yet, and why: a GitHub Actions build gains nothing without a
+Developer ID — a downloaded ad-hoc-signed zip is quarantined, and its signature
+differs every build. An in-app "update from main" can sit on top of
+promote.sh later: the app knows its `ReviewCommit` and can compare it with
+`origin/main`.
+
 ## Everyday targets
 
 | Target        | What it does                                              |
@@ -48,9 +88,10 @@ doing it for you:
 | `make check`  | `swift build` only — fast compile gate for CI/agents      |
 | `make test`   | `swift test` (swift-testing)                              |
 | `make cli`    | build and sign the `review` command-line tool             |
-| `make run`    | build the `.app`, ad-hoc sign, `open` it                 |
-| `make` / build| `build/Review.app` (debug)                              |
-| `make icon`   | regenerate `build/AppIcon.icns`                          |
+| `make run`    | build the dev `.app`, sign, `open` it                    |
+| `make` / build| `build/Review Dev.app` (debug)                           |
+| `make install`| build `origin/main` into `/Applications/Review.app`      |
+| `make icon`   | regenerate the icon for `VARIANT`                        |
 | `make clean`  | remove `build/ .build/ dist/`                            |
 
 ## Versioning

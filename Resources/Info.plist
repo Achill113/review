@@ -7,19 +7,21 @@
 	<key>CFBundleExecutable</key>
 	<string>ReviewApp</string>
 	<key>CFBundleIdentifier</key>
-	<string>dev.review.app</string>
+	<string>__BUNDLE_ID__</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>Review</string>
+	<string>__APP_NAME__</string>
 	<key>CFBundleDisplayName</key>
-	<string>Review</string>
+	<string>__APP_NAME__</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
 	<string>__SHORT_VERSION__</string>
 	<key>CFBundleVersion</key>
 	<string>__BUILD_VERSION__</string>
+	<key>ReviewCommit</key>
+	<string>__COMMIT__</string>
 	<key>CFBundleIconFile</key>
 	<string>AppIcon</string>
 	<key>LSMinimumSystemVersion</key>
@@ -34,10 +36,10 @@
 	<array>
 		<dict>
 			<key>CFBundleURLName</key>
-			<string>dev.review.app.open</string>
+			<string>__BUNDLE_ID__.open</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>review</string>
+				<string>__URL_SCHEME__</string>
 			</array>
 		</dict>
 	</array>

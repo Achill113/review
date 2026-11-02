@@ -242,8 +242,9 @@ final class AppModel {
     }
 
     /// `review://open?pr=owner/repo%23123` — from `review open`, or a link.
+    /// A dev build answers `review-dev://` instead.
     func handle(_ url: URL) {
-        guard url.scheme == "review",
+        guard url.scheme == AppVariant.current.urlScheme,
               let value = URLComponents(url: url, resolvingAgainstBaseURL: false)?
                 .queryItems?.first(where: { $0.name == "pr" })?.value
         else { return }

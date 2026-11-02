@@ -53,6 +53,10 @@ and inside `Contents/MacOS/`. The bundle is `Review.app` with display name
 Review; only `CFBundleExecutable` differs. That leaves `review` free for the
 CLI.
 
+A build from a checkout is the dev variant instead: bundle `Review Dev.app`,
+id `dev.review.app.dev`. `AppVariant` in ReviewCore holds what differs; see
+build-system.md.
+
 ## Everything is a child process
 
 The app talks to five programs, none bundled: git, gh, gopls,

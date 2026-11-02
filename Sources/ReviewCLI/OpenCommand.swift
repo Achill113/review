@@ -6,7 +6,7 @@ import ReviewCore
 struct Open: ParsableCommand {
     static let configuration = CommandConfiguration(
         abstract: "Open a pull request in Review.app.",
-        discussion: "Goes through the review:// URL scheme, so a running app opens it in its window. Needs Review.app registered: make install, or make register for the build in ./build."
+        discussion: "Goes through the review:// URL scheme, so a running app opens it in its window. Needs Review.app registered by make install. A dev build of this tool opens Review Dev.app over review-dev:// instead, registered by make register."
     )
 
     @Argument(help: "A pull request URL or owner/repo#123.")
@@ -15,7 +15,7 @@ struct Open: ParsableCommand {
     func run() throws {
         let reference = try PullRequestReference(parsing: pullRequest)
         var components = URLComponents()
-        components.scheme = "review"
+        components.scheme = AppVariant.current.urlScheme
         components.host = "open"
         components.queryItems = [URLQueryItem(name: "pr", value: reference.description)]
         guard let url = components.url else { throw ExitCode.failure }
@@ -26,7 +26,7 @@ struct Open: ParsableCommand {
         try process.run()
         process.waitUntilExit()
         guard process.terminationStatus == 0 else {
-            throw ValidationError("macOS has no app for review:// links yet. Run `make install` (or `make register`) first.")
+            throw ValidationError("macOS has no app for \(AppVariant.current.urlScheme):// links yet. Run `make install` (or `make register` for a dev build) first.")
         }
     }
 }

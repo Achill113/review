@@ -61,7 +61,7 @@ if security find-identity -p codesigning | grep -q "\"$NAME\""; then
 	echo
 	echo "  The signature's designated requirement is now certificate-based"
 	echo "  and stable across rebuilds, so granted permissions survive a rebuild."
-	echo "  Verify any time with:  codesign -d -r- build/Review.app"
+	echo "  Verify any time with:  codesign -d -r- \"build/Review Dev.app\""
 else
 	echo "✗ '$NAME' was not imported." >&2
 	echo "  Fall back to Keychain Access → Certificate Assistant →" >&2

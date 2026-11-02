@@ -1,3 +1,4 @@
+import ReviewCore
 import SwiftUI
 
 // Not `main.swift` — see the note in Sources/ReviewCLI/Main.swift.
@@ -22,6 +23,9 @@ struct ReviewApp: App {
         }
         .defaultSize(width: Theme.windowDefaultWidth, height: Theme.windowDefaultHeight)
         .commands {
+            CommandGroup(replacing: .appInfo) {
+                Button("About \(AppVariant.current.appName)") { AboutPanel.show() }
+            }
             ReviewCommands()
             CommandGroup(after: .sidebar) {
                 Button("Browse Pull Requests") { model.showBrowser() }
