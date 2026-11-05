@@ -30,9 +30,14 @@ public struct ReviewThread: Hashable, Sendable, Identifiable, Codable {
     }
 
     /// The lines the thread covers now, if it is not outdated.
+    ///
+    /// `line` is authoritative. GitHub can leave `startLine` stale — after
+    /// it, once a multi-line thread's anchor moves — so a start past the end
+    /// is ignored rather than trusted (a backwards range traps).
     public var lines: ClosedRange<Int>? {
         guard let line else { return nil }
-        return (startLine ?? line)...line
+        guard let startLine, startLine <= line else { return line...line }
+        return startLine...line
     }
 }
 

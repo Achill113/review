@@ -25,4 +25,15 @@ struct ReviewThreadDecodingTests {
         #expect(threads[1].lines == 10...12)
         #expect(threads[1].comments.first?.author == "ghost")
     }
+
+    /// GitHub has returned a start line after the end line for a thread
+    /// whose anchor moved; building that range crashed the app.
+    @Test("A start line past the end line falls back to the end line alone")
+    func staleStartLine() {
+        let thread = ReviewThread(
+            id: "T3", path: "a.go", side: .head, line: 484, startLine: 487, originalLine: 487,
+            isResolved: false, isOutdated: false, comments: []
+        )
+        #expect(thread.lines == 484...484)
+    }
 }
