@@ -485,6 +485,24 @@ sheet) and 1.5, with the sidebar and drafts inspector open. **Tests: 194.**
 **Not scaled:** the window's title and toolbar (system chrome, as in Safari
 and Xcode) and Settings, which is a fixed-size window.
 
+## Previous and next pull request
+
+Back to the PR looked at before this one, as a browser goes back a page:
+Navigate ▸ Previous Pull Request (⌘[) and Next Pull Request (⌘]), and a
+↩︎ button in the sidebar's toolbar whose menu lists the earlier PRs, most
+recent first. Every change of the selected PR is a visit — a sidebar click, an
+inbox item, a `review://` link. From the browser, Previous returns to the PR
+underneath. **Closing the PR on screen returns to the one you came from**,
+not the top of the list. Code Back/Forward (⌃⌘←/→) stays per PR and is
+separate. The history is `VisitHistory` in ReviewKit; it is not saved across
+launches.
+
+**Verified:** `VisitHistoryTests` (back/forward, a new visit dropping what was
+ahead, closing the current PR, collapsing a step that would go nowhere after a
+removal, the 50-visit cap); a snapshot with cobra#2397 restored and
+cobra#2562 opened shows the button enabled with its menu. **Tests: 203.**
+**Not checked by hand:** pressing ⌘[ / the menu in a live run.
+
 ## What next
 
 1. The two review comments on review#1: remove `SplitCodeView`'s observers in
