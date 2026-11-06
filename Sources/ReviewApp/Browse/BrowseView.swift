@@ -37,11 +37,7 @@ struct BrowseView: View {
         let browser = model.browser
         if browser.listings.isEmpty {
             if let error = browser.searchError {
-                ContentUnavailableView {
-                    Label("Couldn't Search", systemImage: "exclamationmark.triangle")
-                } description: {
-                    Text(error)
-                } actions: {
+                EmptyState(title: "Couldn't Search", systemImage: "exclamationmark.triangle", description: error) {
                     Button("Try Again") {
                         Task { await browser.search(browser.query(tracked: model.trackedRepositories)) }
                     }
@@ -51,11 +47,11 @@ struct BrowseView: View {
             } else if !browser.filter.keywords.trimmingCharacters(in: .whitespaces).isEmpty {
                 ContentUnavailableView.search(text: browser.filter.keywords)
             } else {
-                ContentUnavailableView {
-                    Label("No Pull Requests", systemImage: "tray")
-                } description: {
-                    Text("Nothing in \(browser.scope.title) matches these filters.")
-                } actions: {
+                EmptyState(
+                    title: "No Pull Requests",
+                    systemImage: "tray",
+                    description: "Nothing in \(browser.scope.title) matches these filters."
+                ) {
                     if browser.filter.hasConditions {
                         Button("Clear Filters") { browser.clearConditions() }
                     }

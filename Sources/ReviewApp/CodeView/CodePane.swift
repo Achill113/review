@@ -11,6 +11,7 @@ final class CodePane: NSObject, NSTextViewDelegate {
 
     private var shownID: String?
     private var shownScrollKey: String?
+    private var shownZoom: CGFloat?
     private var revealedID: UUID?
     private var lastTopRow: Int?
     var onSelectionChange: ((Cursor, ClosedRange<Int>?) -> Void)?
@@ -47,15 +48,17 @@ final class CodePane: NSObject, NSTextViewDelegate {
         onTopRowChange?(top)
     }
 
-    /// Shows `rows` if they are not already showing. `id` changes with
-    /// anything that changes the text; `scrollKey` only with the file and
-    /// mode, so expanding a gap keeps the place.
-    func show(_ rows: [CodeDocument.Row], id: String, scrollKey: String) {
-        guard shownID != id else { return }
+    /// Shows `rows` if they are not already showing at this zoom. `id`
+    /// changes with anything that changes the text; `scrollKey` only with the
+    /// file and mode, so expanding a gap — or zooming — keeps the place.
+    func show(_ rows: [CodeDocument.Row], id: String, scrollKey: String, zoom: CGFloat) {
+        guard shownID != id || shownZoom != zoom else { return }
         let keepScroll = shownScrollKey == scrollKey
         shownID = id
         shownScrollKey = scrollKey
+        shownZoom = zoom
         if !keepScroll { revealedID = nil }
+        textView.textContainerInset = Theme.Code.textInset
         textView.show(rows, text: CodeAttributedText.make(rows), keepingScroll: keepScroll)
         gutter.update(rows: rows)
     }

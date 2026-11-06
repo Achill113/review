@@ -16,12 +16,11 @@ struct FilesColumn: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         case .failed(let message):
-            ContentUnavailableView {
-                Label("Couldn't Open \(session.reference.description)", systemImage: "exclamationmark.triangle")
-            } description: {
-                Text(message)
-                    .textSelection(.enabled)
-            } actions: {
+            EmptyState(
+                title: "Couldn't Open \(session.reference.description)",
+                systemImage: "exclamationmark.triangle",
+                description: message
+            ) {
                 Button("Try Again") {
                     Task { await model.load(session) }
                 }
@@ -39,7 +38,7 @@ struct FilesColumn: View {
             }
             .overlay {
                 if review.files.isEmpty {
-                    ContentUnavailableView(
+                    EmptyState(
                         review.changesSince == nil ? "No Changes" : "No Changes Since Your Last View",
                         systemImage: "checkmark.circle"
                     )

@@ -11,6 +11,7 @@ struct GroupHeader: View {
     var body: some View {
         HStack {
             Text("\(status.title) · \(count)")
+                .font(Theme.Fonts.sectionHeader)
             Spacer()
             if status.isFinished {
                 Button("Close All") { model.closeAll(status) }

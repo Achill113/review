@@ -101,11 +101,11 @@ struct PostReviewSheet: View {
 
     private func posted(_ url: URL) -> some View {
         VStack(spacing: Theme.spacing) {
-            ContentUnavailableView {
-                Label("Review Posted", systemImage: "checkmark.circle")
-            } description: {
-                Text(event == .pending ? "It is waiting on GitHub for you to submit." : "It is on GitHub now.")
-            } actions: {
+            EmptyState(
+                title: "Review Posted",
+                systemImage: "checkmark.circle",
+                description: event == .pending ? "It is waiting on GitHub for you to submit." : "It is on GitHub now."
+            ) {
                 Link("Open on GitHub", destination: url)
                 Button("Done") { dismiss() }
                     .keyboardShortcut(.defaultAction)

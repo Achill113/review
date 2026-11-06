@@ -472,6 +472,19 @@ rebase (the base's new file is left out), and a conflicted replay (flagged).
 this build. GitHub's own last-view state is not readable through its API; the
 commit of the reviewer's last submitted review could seed it.
 
+## Zoom
+
+View ▸ Actual Size / Zoom In / Zoom Out (⌘0, ⌘=, ⌘−) scale the whole window:
+every font, the code viewer and its gutter, padding, column widths, and the
+control size. The level is remembered across launches; `--zoom <scale>` sets
+it for one scripted launch without saving it. See plans/design-system.md.
+
+**Verified:** snapshots of spf13/cobra#2397 at 0.75, 1, 1.3 (Post Review
+sheet) and 1.5, with the sidebar and drafts inspector open. **Tests: 194.**
+
+**Not scaled:** the window's title and toolbar (system chrome, as in Safari
+and Xcode) and Settings, which is a fixed-size window.
+
 ## What next
 
 1. The two review comments on review#1: remove `SplitCodeView`'s observers in
@@ -483,6 +496,12 @@ commit of the reviewer's last submitted review could seed it.
    relative imports among the changed files), dependencies first.
 
 ## Things that bit us
+
+**Some system views run backwards against a custom environment font.**
+With a zoomed `.font` on the window, `ContentUnavailableView` and the
+sidebar's `Label` rows got *smaller* as the zoom grew. Setting the font on
+their inner `Text`/`Label` directly fixes it — hence `EmptyState`, and the
+explicit font on the Browse row and sidebar section headers.
 
 **A doc named `claude.md` is a `CLAUDE.md`.** `plans/claude.md` was loaded by
 Claude Code as instructions for `plans/`, because macOS filesystems are

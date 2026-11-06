@@ -22,7 +22,18 @@ rules keep it honest (`SWIFTUI-RULES.md` §2.4, §5.1):
    The code viewer is the one exception that will need care: an `NSTextView`
    takes an `NSFont`, so derive it from the monospaced body style's size rather
    than picking a number.
-2. **Emphasis is weight; de-emphasis is color.** Headings get `.semibold`;
+2. **Zoom multiplies, it does not replace.** ⌘+ / ⌘− / ⌘0 step `AppZoom`
+   through `ZoomLevel.steps` (0.75×–2×). `Theme.textSize(_:)` reads a text
+   style's size from AppKit and multiplies it; `Theme.scaled(_:)` does the
+   same for padding, column widths and fixed heights. Both read
+   `AppZoom.shared`, which is `@Observable`, so any view body or `NSView`
+   that reads a `Theme` metric redraws on a zoom change with no plumbing. The
+   code viewer re-renders because `CodeView` and `SplitCodeView` take the
+   zoom as a property. The window root sets a zoomed default font and
+   `controlSize`; a few system views ignore the environment font and need
+   theirs set directly — use `EmptyState`, not `ContentUnavailableView`.
+   Window chrome and Settings stay at system size.
+3. **Emphasis is weight; de-emphasis is color.** Headings get `.semibold`;
    quieter text gets `.secondary`, never a lighter weight.
 
 ## The intended shape

@@ -67,6 +67,7 @@ final class AppModel {
 
     /// Startup plus whatever the launch options ask for.
     func start(applying options: LaunchOptions) async {
+        if let zoom = options.zoom { AppZoom.shared.apply(scriptedScale: zoom) }
         await start()
         if let scope = options.browseScope {
             showBrowser()

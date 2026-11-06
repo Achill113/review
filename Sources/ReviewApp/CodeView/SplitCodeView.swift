@@ -17,6 +17,7 @@ struct SplitCodeView: NSViewRepresentable {
     let draftRows: [Int: UUID]
     let threadRows: [Int: String]
     let actions: CodeViewActions
+    let zoom: CGFloat
 
     @MainActor
     final class Coordinator {
@@ -76,8 +77,8 @@ struct SplitCodeView: NSViewRepresentable {
         coordinator.left.textView.onHeaderClick = actions.onHeaderClick
 
         let leftRows = document.leftRows ?? []
-        coordinator.left.show(leftRows, id: "left:\(documentID)", scrollKey: "left:\(scrollKey)")
-        coordinator.right.show(document.rows, id: "right:\(documentID)", scrollKey: "right:\(scrollKey)")
+        coordinator.left.show(leftRows, id: "left:\(documentID)", scrollKey: "left:\(scrollKey)", zoom: zoom)
+        coordinator.right.show(document.rows, id: "right:\(documentID)", scrollKey: "right:\(scrollKey)", zoom: zoom)
         coordinator.right.textView.setMarks(drafts: draftRows, threads: threadRows)
         coordinator.right.apply(reveal, row: reveal?.row(in: document))
     }

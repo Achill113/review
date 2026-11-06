@@ -16,6 +16,7 @@ struct ReviewApp: App {
             RootView()
                 .environment(model)
                 .frame(minWidth: Theme.windowMinWidth, minHeight: Theme.windowMinHeight)
+                .zoomed()
                 .task {
                     delegate.attach(model)
                     await model.start(applying: .current)

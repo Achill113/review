@@ -89,39 +89,31 @@ struct CodeDetail: View {
         if session.review == nil {
             Color.clear
         } else if session.selectedFile == nil, session.externalFile == nil {
-            ContentUnavailableView("No File Selected", systemImage: "doc.text")
+            EmptyState("No File Selected", systemImage: "doc.text")
         } else {
             switch session.documentState {
             case .idle, .loading:
                 ProgressView()
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             case .failed(let message):
-                ContentUnavailableView {
-                    Label("Couldn't Show This File", systemImage: "exclamationmark.triangle")
-                } description: {
-                    Text(message).textSelection(.enabled)
-                }
+                EmptyState("Couldn't Show This File", systemImage: "exclamationmark.triangle", description: message)
             case .loaded(let document, let id):
                 if document.isBinary {
-                    ContentUnavailableView("Binary File", systemImage: "doc.zipper", description: Text("There is no text to show."))
+                    EmptyState("Binary File", systemImage: "doc.zipper", description: "There is no text to show.")
                 } else if document.rows.isEmpty {
-                    ContentUnavailableView(
-                        "No Text Changes",
-                        systemImage: "doc.text",
-                        description: Text(emptyDescription)
-                    )
+                    EmptyState("No Text Changes", systemImage: "doc.text", description: emptyDescription)
                 } else {
                     if session.mode == .split, document.leftRows != nil {
                         SplitCodeView(
                             document: document, documentID: id, scrollKey: session.scrollKey ?? id,
                             reveal: session.pendingReveal, draftRows: session.draftRows,
-                            threadRows: session.threadRows, actions: actions
+                            threadRows: session.threadRows, actions: actions, zoom: AppZoom.shared.scale
                         )
                     } else {
                         CodeView(
                             document: document, documentID: id, scrollKey: session.scrollKey ?? id,
                             reveal: session.pendingReveal, draftRows: session.draftRows,
-                            threadRows: session.threadRows, actions: actions
+                            threadRows: session.threadRows, actions: actions, zoom: AppZoom.shared.scale
                         )
                     }
                 }
