@@ -5,16 +5,34 @@ import SwiftUI
 
 /// Centralized layout metrics + type system (SWIFTUI-RULES §2.4, §5.1).
 ///
-/// Two rules keep this honest:
-/// - **Scale** comes from semantic SwiftUI text styles only (`.caption` →
-///   `.body` → `.title2` → `.largeTitle`), never hardcoded point sizes, so
-///   Dynamic Type and OS metric updates keep working.
+/// Three rules keep this honest:
+/// - **Scale** comes from the system's text styles (`.caption` → `.body` →
+///   `.title2`), never a point size picked here. Each style's size is read
+///   from AppKit and multiplied by the app's zoom (⌘+ / ⌘− / ⌘0), so the OS
+///   still decides what "body" means and the reviewer decides how big.
 /// - **Emphasis is weight; de-emphasis is color** (`.secondary` /
 ///   `.tertiary`), never a lighter font weight.
+/// - **Anything that holds text scales with it.** Padding, column widths
+///   and fixed heights go through `scaled(_:)`; window sizes, corner radii
+///   and hairlines do not.
 ///
 /// When you find yourself typing the same number a third time, it belongs
 /// here as a named metric.
+@MainActor
 enum Theme {
+    // MARK: Zoom
+
+    /// A metric at the current zoom. Reading it inside a view body makes
+    /// that view redraw when the zoom changes.
+    static func scaled(_ value: CGFloat) -> CGFloat {
+        value * AppZoom.shared.scale
+    }
+
+    /// A system text style's point size at the current zoom.
+    static func textSize(_ style: NSFont.TextStyle) -> CGFloat {
+        scaled(NSFont.preferredFont(forTextStyle: style).pointSize)
+    }
+
     // MARK: Window
     static let windowMinWidth: CGFloat = 900
     static let windowMinHeight: CGFloat = 560
@@ -23,67 +41,70 @@ enum Theme {
     static let windowDefaultHeight: CGFloat = 860
 
     // MARK: Sidebar
-    static let sidebarMinWidth: CGFloat = 220
-    static let sidebarIdealWidth: CGFloat = 260
-    static let sidebarMaxWidth: CGFloat = 360
+    static var sidebarMinWidth: CGFloat { scaled(220) }
+    static var sidebarIdealWidth: CGFloat { scaled(260) }
+    static var sidebarMaxWidth: CGFloat { scaled(360) }
     /// Wide enough for an install command to sit on one line.
-    static let toolPopoverWidth: CGFloat = 380
+    static var toolPopoverWidth: CGFloat { scaled(380) }
 
     // MARK: Files column
-    static let filesMinWidth: CGFloat = 240
-    static let filesIdealWidth: CGFloat = 300
-    static let filesMaxWidth: CGFloat = 480
+    static var filesMinWidth: CGFloat { scaled(240) }
+    static var filesIdealWidth: CGFloat { scaled(300) }
+    static var filesMaxWidth: CGFloat { scaled(480) }
 
     // MARK: Browser
-    static let scopesMinWidth: CGFloat = 200
-    static let scopesIdealWidth: CGFloat = 240
-    static let scopesMaxWidth: CGFloat = 360
-    static let browseTitleMinWidth: CGFloat = 200
-    static let browseTitleIdealWidth: CGFloat = 420
-    static let browseNarrowColumnWidth: CGFloat = 70
-    static let browseWideColumnWidth: CGFloat = 130
+    static var scopesMinWidth: CGFloat { scaled(200) }
+    static var scopesIdealWidth: CGFloat { scaled(240) }
+    static var scopesMaxWidth: CGFloat { scaled(360) }
+    static var browseTitleMinWidth: CGFloat { scaled(200) }
+    static var browseTitleIdealWidth: CGFloat { scaled(420) }
+    static var browseNarrowColumnWidth: CGFloat { scaled(70) }
+    static var browseWideColumnWidth: CGFloat { scaled(130) }
     /// A person filter's login field: room for most logins, not a sentence.
-    static let loginFieldWidth: CGFloat = 120
+    static var loginFieldWidth: CGFloat { scaled(120) }
     /// How long typing pauses before the browser searches.
     static let searchDelay = Duration.milliseconds(350)
 
     // MARK: Results panel
-    static let resultsMinHeight: CGFloat = 120
-    static let resultsIdealHeight: CGFloat = 220
-    static let resultsMaxHeight: CGFloat = 600
+    static var resultsMinHeight: CGFloat { scaled(120) }
+    static var resultsIdealHeight: CGFloat { scaled(220) }
+    static var resultsMaxHeight: CGFloat { scaled(600) }
     /// The divider's drag target, much taller than the hairline it draws.
     static let dividerHitHeight: CGFloat = 8
     /// Room for a four-digit line number in a result row.
-    static let resultLineNumberWidth: CGFloat = 36
+    static var resultLineNumberWidth: CGFloat { scaled(36) }
     /// A thread card's disclosure chevron.
-    static let chevronWidth: CGFloat = 12
+    static var chevronWidth: CGFloat { scaled(12) }
 
     // MARK: Drafts inspector
-    static let inspectorMinWidth: CGFloat = 300
-    static let inspectorIdealWidth: CGFloat = 380
-    static let inspectorMaxWidth: CGFloat = 640
+    static var inspectorMinWidth: CGFloat { scaled(300) }
+    static var inspectorIdealWidth: CGFloat { scaled(380) }
+    static var inspectorMaxWidth: CGFloat { scaled(640) }
     static let cardCornerRadius: CGFloat = 8
     static let codeBlockCornerRadius: CGFloat = 6
-    static let noteMinHeight: CGFloat = 54
-    static let noteMaxHeight: CGFloat = 220
+    static var noteMinHeight: CGFloat { scaled(54) }
+    static var noteMaxHeight: CGFloat { scaled(220) }
     /// Quoted code in a draft card is a reminder, not the code itself.
     static let maxQuotedLines = 6
-    static let readingTopInset: CGFloat = 28
-    static let badgePaddingHorizontal: CGFloat = 6
-    static let badgePaddingVertical: CGFloat = 1
+    static var readingTopInset: CGFloat { scaled(28) }
+    static var badgePaddingHorizontal: CGFloat { scaled(6) }
+    static var badgePaddingVertical: CGFloat { scaled(1) }
     /// Room for "10." so a numbered list's text lines up.
-    static let listMarkerWidth: CGFloat = 16
+    static var listMarkerWidth: CGFloat { scaled(16) }
     static let quoteBarWidth: CGFloat = 3
 
     // MARK: Hover
-    static let hoverMaxWidth: CGFloat = 520
-    static let hoverMaxHeight: CGFloat = 360
+    static var hoverMaxWidth: CGFloat { scaled(520) }
+    static var hoverMaxHeight: CGFloat { scaled(360) }
 
     // MARK: Post sheet
-    static let postSheetWidth: CGFloat = 620
-    static let postSheetHeight: CGFloat = 640
-    static let summaryHeight: CGFloat = 90
-    static let sheetPadding: CGFloat = 20
+    static var postSheetWidth: CGFloat { scaled(620) }
+    /// Grows with the zoom, but never past the screen it is shown on.
+    static var postSheetHeight: CGFloat {
+        min(scaled(640), (NSScreen.main?.visibleFrame.height ?? 800) * 0.85)
+    }
+    static var summaryHeight: CGFloat { scaled(90) }
+    static var sheetPadding: CGFloat { scaled(20) }
 
     // MARK: Settings
     static let settingsWidth: CGFloat = 460
@@ -91,41 +112,49 @@ enum Theme {
 
     // MARK: Panes
     /// Standard horizontal inset for pane content.
-    static let gutter: CGFloat = 12
-    static let spacing: CGFloat = 10
-    static let tightSpacing: CGFloat = 5
+    static var gutter: CGFloat { scaled(12) }
+    static var spacing: CGFloat { scaled(10) }
+    static var tightSpacing: CGFloat { scaled(5) }
 
     // MARK: Type scale
     //
     // The whole app's typography lives here so hierarchy stays consistent and
     // a future restyle lands in one place.
+    @MainActor
     enum Fonts {
+        /// Text with no style of its own: the default for the whole window.
+        static var body: Font { .system(size: textSize(.body)) }
         /// A pull request's title in the detail column.
-        static let pageTitle = Font.title2.weight(.semibold)
+        static var pageTitle: Font { .system(size: textSize(.title2), weight: .semibold) }
         /// A sidebar row's primary line.
-        static let rowTitle = Font.body.weight(.medium)
+        static var rowTitle: Font { .system(size: textSize(.body), weight: .medium) }
         /// Metadata: repository names, counts, the footer line.
-        static let meta = Font.caption
+        static var meta: Font { .system(size: textSize(.caption1)) }
         /// A file's +/− counts: tabular figures so a column of them aligns.
-        static let counts = Font.caption.monospacedDigit().weight(.medium)
+        static var counts: Font { .system(size: textSize(.caption1), weight: .medium).monospacedDigit() }
         /// Source code in SwiftUI views; the code viewer itself uses
         /// `Code.font`.
-        static let code = Font.system(.body, design: .monospaced)
+        static var code: Font { .system(size: textSize(.body), design: .monospaced) }
         /// Code in result lists, a step down so a row stays one line.
-        static let codeSmall = Font.system(.callout, design: .monospaced)
+        static var codeSmall: Font { .system(size: textSize(.callout), design: .monospaced) }
         /// The reviewer's own words in a draft.
-        static let note = Font.body
+        static var note: Font { body }
         /// "base", "not in PR".
-        static let badge = Font.caption2.weight(.medium)
+        static var badge: Font { .system(size: textSize(.caption2), weight: .medium) }
+        /// A sidebar section's header. Set explicitly: the sidebar list
+        /// otherwise forces the system's size on headers, ignoring the zoom.
+        static var sectionHeader: Font { .system(size: textSize(.subheadline), weight: .semibold) }
+        /// An empty state's title: "No Drafts".
+        static var emptyTitle: Font { .system(size: textSize(.title1), weight: .bold) }
         /// A panel's header: the results panel's "References · 3 results".
-        static let panelTitle = Font.callout.weight(.semibold)
+        static var panelTitle: Font { .system(size: textSize(.callout), weight: .semibold) }
 
         /// Markdown headings, scaled for a narrow column: `#` steps up from
         /// body, the rest are body text made heavier.
         static func markdownHeading(level: Int) -> Font {
             switch level {
-            case 1: .title3.weight(.semibold)
-            case 2: .headline
+            case 1: .system(size: textSize(.title3), weight: .semibold)
+            case 2: .system(size: textSize(.headline), weight: .bold)
             default: rowTitle
             }
         }
@@ -136,34 +165,35 @@ enum Theme {
     /// The code viewer's palette and metrics. AppKit types, because the
     /// viewer is an NSTextView; every colour is a dynamic system colour, so
     /// light and dark both come for free.
+    @MainActor
     enum Code {
-        /// Monospaced at the body text style's size, so it tracks the
-        /// system's text size rather than a number picked here.
+        /// Monospaced at the body text style's size and the app's zoom, so
+        /// it tracks the system's text size rather than a number picked here.
         static var font: NSFont {
-            NSFont.monospacedSystemFont(ofSize: NSFont.preferredFont(forTextStyle: .body).pointSize, weight: .regular)
+            NSFont.monospacedSystemFont(ofSize: textSize(.body), weight: .regular)
         }
 
         static var gutterFont: NSFont {
-            NSFont.monospacedDigitSystemFont(ofSize: NSFont.preferredFont(forTextStyle: .callout).pointSize, weight: .regular)
+            NSFont.monospacedDigitSystemFont(ofSize: textSize(.callout), weight: .regular)
         }
 
         /// Tabs render four columns wide — Go is tab-indented throughout.
         static let tabWidth = 4
         /// Extra leading between lines; diff bands cover it, so they stay
         /// continuous.
-        static let lineSpacing: CGFloat = 2
-        static let textInset = NSSize(width: 6, height: 6)
-        static let gutterPadding: CGFloat = 8
+        static var lineSpacing: CGFloat { scaled(2) }
+        static var textInset: NSSize { NSSize(width: scaled(6), height: scaled(6)) }
+        static var gutterPadding: CGFloat { scaled(8) }
         /// The leftmost gutter column, where a draft's bubble sits.
-        static let draftMarkWidth: CGFloat = 16
+        static var draftMarkWidth: CGFloat { scaled(16) }
         static let draftMark = NSColor.controlAccentColor
         static let threadMark = NSColor.secondaryLabelColor
         /// How far below the viewport's top edge the "file being read" is
         /// taken from.
-        static let topRowProbe: CGFloat = 24
+        static var topRowProbe: CGFloat { scaled(24) }
         /// How long the pointer rests on a symbol before its hover shows.
         static let hoverDelay = Duration.milliseconds(600)
-        static let gutterColumnGap: CGFloat = 6
+        static var gutterColumnGap: CGFloat { scaled(6) }
 
         static let text = NSColor.textColor
         static let background = NSColor.textBackgroundColor

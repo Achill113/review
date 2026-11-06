@@ -31,6 +31,8 @@ struct CodeView: NSViewRepresentable {
     let draftRows: [Int: UUID]
     let threadRows: [Int: String]
     let actions: CodeViewActions
+    /// The app's zoom: a change re-renders the text at the new size.
+    let zoom: CGFloat
 
     func makeCoordinator() -> CodePane {
         CodePane()
@@ -43,7 +45,7 @@ struct CodeView: NSViewRepresentable {
     func updateNSView(_ scrollView: NSScrollView, context: Context) {
         let pane = context.coordinator
         pane.configureInteractive(actions)
-        pane.show(document.rows, id: documentID, scrollKey: scrollKey)
+        pane.show(document.rows, id: documentID, scrollKey: scrollKey, zoom: zoom)
         pane.textView.setMarks(drafts: draftRows, threads: threadRows)
         pane.apply(reveal, row: reveal?.row(in: document))
     }

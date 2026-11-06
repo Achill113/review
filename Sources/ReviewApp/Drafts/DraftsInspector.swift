@@ -23,10 +23,10 @@ struct DraftsInspector: View {
                         .padding(.bottom, Theme.spacing)
                     }
                     if session.unpostedDrafts.isEmpty {
-                        ContentUnavailableView(
+                        EmptyState(
                             "No Drafts",
                             systemImage: "text.bubble",
-                            description: Text("Select lines and click + in the gutter, or press ⌘⇧M. Drafts stay private until you post them.")
+                            description: "Select lines and click + in the gutter, or press ⌘⇧M. Drafts stay private until you post them."
                         )
                         .padding(.top, Theme.readingTopInset)
                     } else {

@@ -25,6 +25,7 @@ struct InboxSection<Empty: View>: View {
             }
         } header: {
             Text(items.isEmpty ? title : "\(title) · \(items.count)")
+                .font(Theme.Fonts.sectionHeader)
         }
     }
 }

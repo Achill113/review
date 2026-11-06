@@ -3,6 +3,7 @@ import ReviewKit
 
 /// Turns a `CodeDocument` into the attributed string the text view shows:
 /// rows joined by newlines, monospaced, with highlight spans coloured.
+@MainActor
 enum CodeAttributedText {
     static func make(_ rows: [CodeDocument.Row]) -> NSAttributedString {
         let font = Theme.Code.font

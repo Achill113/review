@@ -56,6 +56,9 @@ struct ReviewCommands: Commands {
                 .disabled(session?.review == nil)
             Divider()
         }
+        CommandGroup(after: .toolbar) {
+            ZoomCommands()
+        }
         CommandMenu("Review") {
             Button(session?.selectedFile.map { session?.isViewed($0) == true } == true ? "Mark as Not Viewed" : "Mark as Viewed and Go to Next") {
                 session?.toggleViewedAndAdvance()

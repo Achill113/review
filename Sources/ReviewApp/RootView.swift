@@ -14,7 +14,11 @@ struct RootView: View {
         NavigationSplitView(columnVisibility: $columnVisibility) {
             List(selection: $model.sidebarSelection) {
                 Section {
-                    Label("Browse", systemImage: "magnifyingglass")
+                    Label {
+                        Text("Browse").font(Theme.Fonts.body)
+                    } icon: {
+                        Image(systemName: "magnifyingglass").font(Theme.Fonts.body)
+                    }
                         .tag(SidebarItem.browse)
                         .help("Search and filter pull requests (⇧⌘B)")
                 }
@@ -96,10 +100,10 @@ struct RootView: View {
                         if !session.hasStarted { await model.load(session) }
                     }
             } else {
-                ContentUnavailableView(
+                EmptyState(
                     "No Pull Request Selected",
                     systemImage: "doc.text.magnifyingglass",
-                    description: Text("Open a pull request to start reviewing.")
+                    description: "Open a pull request to start reviewing."
                 )
             }
         } detail: {
