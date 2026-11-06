@@ -16,8 +16,11 @@ final class AppModel {
     /// Opened pull requests, most recent first.
     private(set) var pullRequests: [PullRequestReference] = []
     var selection: PullRequestReference? {
-        didSet { didChangeShownSession() }
+        didSet { didChangeSelection() }
     }
+    /// The pull requests selected before this one, for Previous and Next
+    /// Pull Request. Not saved: it starts afresh each launch.
+    private(set) var history = VisitHistory<PullRequestReference>()
     /// The browser fills the window instead of the selected pull request,
     /// which stays selected underneath for when it closes.
     private(set) var isBrowsing = false {
@@ -163,7 +166,9 @@ final class AppModel {
         if let session = sessions.removeValue(forKey: reference) {
             Task { await session.close() }
         }
-        if selection == reference { selection = pullRequests.first }
+        // Closing the PR on screen returns to the one the reviewer came from.
+        let returning = history.remove(reference)
+        if selection == reference { selection = returning ?? pullRequests.first }
         saveOpenPullRequests()
     }
 
@@ -233,6 +238,48 @@ final class AppModel {
 
     func showBrowser() {
         isBrowsing = true
+    }
+
+    // MARK: Previous and next pull request
+
+    /// From the browser, Previous returns to the PR underneath it.
+    var canShowPreviousPullRequest: Bool {
+        (isBrowsing && selection != nil) || history.canGoBack
+    }
+
+    var canShowNextPullRequest: Bool {
+        !isBrowsing && history.canGoForward
+    }
+
+    /// Earlier pull requests, the most recent first, for the toolbar's menu.
+    var previousPullRequests: [PullRequestReference] {
+        history.back.reversed()
+    }
+
+    /// "Fix the parser — owner/repo#12", or the reference until the title is known.
+    func menuTitle(for reference: PullRequestReference) -> String {
+        guard let title = session(for: reference)?.review?.pullRequest.title ?? summaries[reference]?.title else {
+            return reference.description
+        }
+        return "\(title) — \(reference)"
+    }
+
+    func showPreviousPullRequest() {
+        if isBrowsing {
+            isBrowsing = false
+        } else if let previous = history.goBack() {
+            selection = previous
+        }
+    }
+
+    func showNextPullRequest() {
+        guard !isBrowsing, let next = history.goForward() else { return }
+        selection = next
+    }
+
+    private func didChangeSelection() {
+        history.visit(selection)
+        didChangeShownSession()
     }
 
     /// Notifications for Claude's answers hold back for the PR on screen.

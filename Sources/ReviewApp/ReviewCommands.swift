@@ -17,6 +17,7 @@ extension FocusedValues {
 
 /// The View menu's review commands. Each acts on the key window's session.
 struct ReviewCommands: Commands {
+    let model: AppModel
     @FocusedValue(\.reviewSession) private var session
 
     var body: some Commands {
@@ -104,6 +105,14 @@ struct ReviewCommands: Commands {
             Button("Forward") { session?.goForward() }
                 .keyboardShortcut(.rightArrow, modifiers: [.control, .command])
                 .disabled(session?.canGoForward != true)
+            Divider()
+            // Between pull requests, as a browser goes between pages.
+            Button("Previous Pull Request") { model.showPreviousPullRequest() }
+                .keyboardShortcut("[", modifiers: .command)
+                .disabled(!model.canShowPreviousPullRequest)
+            Button("Next Pull Request") { model.showNextPullRequest() }
+                .keyboardShortcut("]", modifiers: .command)
+                .disabled(!model.canShowNextPullRequest)
         }
     }
 }

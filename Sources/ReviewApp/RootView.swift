@@ -67,6 +67,9 @@ struct RootView: View {
             .id(shownStatuses)
             .toolbar {
                 ToolbarItem {
+                    PreviousPullRequestButton()
+                }
+                ToolbarItem {
                     RefreshButton()
                 }
             }

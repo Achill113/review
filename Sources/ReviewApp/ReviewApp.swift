@@ -27,7 +27,7 @@ struct ReviewApp: App {
             CommandGroup(replacing: .appInfo) {
                 Button("About \(AppVariant.current.appName)") { AboutPanel.show() }
             }
-            ReviewCommands()
+            ReviewCommands(model: model)
             CommandGroup(after: .sidebar) {
                 Button("Browse Pull Requests") { model.showBrowser() }
                     .keyboardShortcut("b", modifiers: [.command, .shift])
