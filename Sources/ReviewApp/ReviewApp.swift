@@ -7,6 +7,10 @@ struct ReviewApp: App {
     @NSApplicationDelegateAdaptor private var delegate: AppDelegate
     @State private var model = AppModel()
 
+    init() {
+        UserDefaults.standard.register(defaults: NotificationPreferences.registrationDefaults)
+    }
+
     var body: some Scene {
         // One `Window`, not a `WindowGroup`: a WindowGroup opens a new window
         // for each `review://` link, and steering it with

@@ -39,9 +39,11 @@ struct InboxDecodingTests {
         let tracked = GitHubClient.searchArguments(.assigned, in: repositories, limit: 100)
         #expect(tracked.starts(with: ["search", "prs", "--assignee=@me", "--state=open"]))
         #expect(tracked.contains(["--repo", "acme/a", "--repo", "acme/b"]))
-        let everywhere = GitHubClient.searchArguments(.reviewRequested, in: [], limit: 100)
+        let everywhere = GitHubClient.searchArguments(.teamReviewRequested, in: [], limit: 100)
         #expect(everywhere.contains("--review-requested=@me"))
         #expect(!everywhere.contains("--repo"))
+        // Asked by name has no flag; it goes in the query words.
+        #expect(GitHubClient.searchArguments(.reviewRequested, in: [], limit: 100).contains("user-review-requested:@me"))
         #expect(GitHubClient.searchArguments(.authored, in: [], limit: 100).contains("--author=@me"))
     }
 }

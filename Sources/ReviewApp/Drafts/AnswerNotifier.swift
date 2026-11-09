@@ -50,7 +50,7 @@ enum AnswerNotifier {
     }
 
     /// The answer's first paragraph, without Markdown punctuation.
-    static func preview(_ markdown: String) -> String {
+    nonisolated static func preview(_ markdown: String) -> String {
         let first = markdown.components(separatedBy: "\n\n").first { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty } ?? markdown
         let plain = first.replacingOccurrences(of: "`", with: "").replacingOccurrences(of: "**", with: "")
         return plain.count > 220 ? String(plain.prefix(220)) + "…" : plain

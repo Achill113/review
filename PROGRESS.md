@@ -723,3 +723,23 @@ Verified: both variants build with the right id, name, scheme and data folder
 (`strings` on each CLI); a dev snapshot launch opened with an empty data folder
 of its own. **Not yet run end to end:** `make install` itself, which is the
 reviewer's to run — the first one after merge does a full release build.
+
+## Notifications for requests, assignments, replies and comments
+
+The app checks GitHub every 2 minutes (configurable) while open and raises a
+macOS notification when you're asked to review — by name, or through a team,
+which are separate switches with team off by default — when you're assigned,
+when someone replies after you in a thread or conversation, and when someone
+comments on your PR. Settings › Notifications holds the switches, the interval
+and the permission state. Clicking a notification opens the PR, and the thread.
+The inbox now searches requests by name (`user-review-requested:@me`) and
+through a team separately to tell them apart. See plans/notifications.md.
+
+Checked with `review activity --hours 72` against the reviewer's real PRs: one
+by-name request (react-blueprint#21) and two team requests told apart; replies
+on nexus#666, #667 and harmony#15421; seven comments on nexus#668 folded into
+one notice. Settings tab checked by snapshot (`--settings notifications`).
+**Not yet seen end to end:** a real banner appearing from a poll, and clicking
+one — that needs the reviewer to allow notifications and wait for activity.
+**Tests: 223.**
+

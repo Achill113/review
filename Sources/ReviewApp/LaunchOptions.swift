@@ -22,7 +22,8 @@ import ReviewKit
 /// - `--since-last-view on` shows only the changes since the PR was last
 ///   viewed, once they are worked out.
 /// - `--sidebar on` shows the sidebar, whatever the last launch left.
-/// - `--settings on` opens Settings; a snapshot writes it as `-settings.png`.
+/// - `--settings on|repositories|fileOrder|notifications` opens Settings, on
+///   that tab if one is named; a snapshot writes it as `-settings.png`.
 /// - `--post-sheet` opens the Post Review sheet (it only plans; nothing is
 ///   sent without pressing Post).
 /// - `--browse on|tracked|me|<owner/repo>` shows the pull request browser,
@@ -58,6 +59,7 @@ struct LaunchOptions {
     let showsInspector: Bool
     let showsSidebar: Bool
     let opensSettings: Bool
+    let settingsTab: SettingsView.Tab?
     let hover: (line: Int, column: Int)?
     /// Nil without `--browse`; `.some(nil)` for `--browse on`.
     let browseScope: BrowseScope??
@@ -103,7 +105,9 @@ struct LaunchOptions {
         opensPostSheet = arguments.contains("--post-sheet")
         showsInspector = value(after: "--inspector") == "on"
         showsSidebar = value(after: "--sidebar") == "on"
-        opensSettings = value(after: "--settings") == "on"
+        let settings = value(after: "--settings")
+        opensSettings = settings != nil && settings != "off"
+        settingsTab = settings.flatMap(SettingsView.Tab.init(rawValue:))
         let hoverParts = value(after: "--hover")?.split(separator: ":").compactMap { Int($0) } ?? []
         hover = hoverParts.count == 2 ? (hoverParts[0], hoverParts[1]) : nil
         browseScope = value(after: "--browse").map { value -> BrowseScope? in

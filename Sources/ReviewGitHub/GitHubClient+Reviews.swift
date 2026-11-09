@@ -147,8 +147,8 @@ private struct CreatedReview: Decodable {
 }
 
 extension GitHubClient {
-    /// Open pull requests the viewer is asked to review, is assigned, or
-    /// wrote — one search each, merged — newest activity first. Limited to
+    /// Open pull requests the viewer is asked to review (by name, or through
+    /// a team), is assigned, or wrote — one search each, merged — newest activity first. Limited to
     /// `repositories` unless it is empty, which means all of GitHub.
     /// Search cannot say which are approved, so a summary lookup does; if it
     /// fails the inbox still comes back, with none marked approved.
@@ -185,9 +185,12 @@ extension GitHubClient {
     }
 
     /// `--repo` may repeat; GitHub ORs the repositories and ANDs the rest.
+    /// `review-requested:@me` includes requests to the reviewer's teams;
+    /// `user-review-requested:@me` is only those by name, and has no flag.
     static func searchArguments(_ reason: InboxItem.Reason, in repositories: [RepositoryName], limit: Int) -> [String] {
         let qualifier = switch reason {
-        case .reviewRequested: "--review-requested=@me"
+        case .reviewRequested: "user-review-requested:@me"
+        case .teamReviewRequested: "--review-requested=@me"
         case .assigned: "--assignee=@me"
         case .authored: "--author=@me"
         }

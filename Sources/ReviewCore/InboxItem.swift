@@ -5,7 +5,13 @@ public struct InboxItem: Hashable, Sendable, Identifiable, Codable {
     /// Why a pull request is in the inbox. One PR can have several: assigned
     /// and asked to review, say.
     public enum Reason: String, CaseIterable, Hashable, Sendable, Codable {
-        case reviewRequested, assigned, authored
+        /// Asked to review by name.
+        case reviewRequested
+        /// Asked to review through a team the reviewer is on. A PR asked of
+        /// both comes back from both searches and has both reasons.
+        case teamReviewRequested
+        case assigned
+        case authored
     }
 
     public let reference: PullRequestReference

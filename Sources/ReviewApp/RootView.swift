@@ -127,6 +127,7 @@ struct RootView: View {
         .task {
             let options = LaunchOptions.current
             if options.showsSidebar { columnVisibility = .all }
+            if let tab = options.settingsTab { UserDefaults.standard.set(tab.rawValue, forKey: SettingsView.tabKey) }
             if options.opensSettings { openSettings() }
         }
 

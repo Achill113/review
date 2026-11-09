@@ -53,6 +53,18 @@ public struct AppServices: Sendable {
 
     public var trackedRepositories: TrackedRepositoriesStore { TrackedRepositoriesStore(root: CheckoutStore.defaultRoot) }
 
+    public var activityStore: ActivityStore { ActivityStore(root: CheckoutStore.defaultRoot) }
+
+    /// Pull requests involving the reviewer updated since `since`, with their
+    /// recent comments, and the reviewer's login; nil when gh is missing.
+    public func activity(
+        in repositories: [RepositoryName],
+        since: Date
+    ) async throws -> (viewer: String, pullRequests: [PullRequestActivity])? {
+        guard let gh = environment.locate(Tool.gh.executableName) else { return nil }
+        return try await GitHubClient(gh: gh, environment: environment.variables).activity(in: repositories, since: since)
+    }
+
     public var fileOrders: FileOrderStore { FileOrderStore(root: CheckoutStore.defaultRoot) }
 
     /// Open pull requests the reviewer is asked to review, assigned, or wrote,
