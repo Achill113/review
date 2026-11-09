@@ -50,6 +50,16 @@ final class AppModel {
     /// group them before each is loaded.
     private(set) var summaries: [PullRequestReference: PullRequestSummary] = [:]
 
+    /// What notifications have covered already; see `ActivityStore`.
+    private var activity = ActivityStore.State()
+    private var isCheckingComments = false
+    /// The next refresh records requests without notifying: newly tracked
+    /// repositories bring PRs that are new to the inbox but not news.
+    private var reseedsRequests = false
+    private var polling: Task<Void, Never>?
+    /// A scripted launch (`REVIEW_SNAPSHOT`) neither notifies nor records.
+    private var isScripted = false
+
     /// Asks the login shell for its environment, then checks the tools.
     /// Safe to call from several places at once: they all wait on one startup.
     func start() async {
@@ -61,8 +71,10 @@ final class AppModel {
                 trackedRepositories = services.trackedRepositories.load().sorted()
                 browser.start(with: services, tracked: trackedRepositories)
                 fileOrders = services.fileOrders.load()
+                activity = services.activityStore.load()
                 await checkTools()
                 await refresh()
+                startPolling()
             }
         }
         await startup?.value
@@ -71,6 +83,7 @@ final class AppModel {
     /// Startup plus whatever the launch options ask for.
     func start(applying options: LaunchOptions) async {
         if let zoom = options.zoom { AppZoom.shared.apply(scriptedScale: zoom) }
+        isScripted = options.snapshotPath != nil
         await start()
         if let scope = options.browseScope {
             showBrowser()
@@ -299,6 +312,24 @@ final class AppModel {
         try? open(value)
     }
 
+    /// From an activity notification: selects the PR, and the thread in its
+    /// inspector when the notification is about one. A PR already loaded
+    /// fetches its threads again first, so the new reply is there.
+    func reveal(pullRequest: String, thread: String?) {
+        guard let reference = try? PullRequestReference(parsing: pullRequest) else { return }
+        open(reference)
+        guard let thread, let session = session(for: reference) else { return }
+        session.isInspectorShown = true
+        session.selectedThreadID = thread
+        guard session.review != nil else { return }
+        Task {
+            await session.loadThreads()
+            guard let found = session.threads.first(where: { $0.id == thread }) else { return }
+            session.expand(threadID: thread)
+            session.reveal(found)
+        }
+    }
+
     /// From a notification: selects the PR, and the draft in its inspector.
     func reveal(pullRequest: String, draft: UUID?) {
         guard let reference = try? PullRequestReference(parsing: pullRequest) else { return }
@@ -345,7 +376,8 @@ final class AppModel {
         async let inbox: Void = refreshInbox()
         async let summaries: Void = refreshSummaries(of: pullRequests)
         async let browsed: Void = refreshBrowser()
-        _ = await (inbox, summaries, browsed)
+        async let comments: Void = checkComments()
+        _ = await (inbox, summaries, browsed, comments)
     }
 
     /// Only when it is showing: otherwise it searches afresh when it is.
@@ -386,10 +418,79 @@ final class AppModel {
                 inbox = try await services.inbox(in: trackedRepositories) ?? []
                 inboxError = nil
                 lastRefreshed = .now
+                noticeRequests()
             } catch {
                 inboxError = "\(error)"
             }
         } while isInboxStale
+    }
+
+    // MARK: Notifications
+
+    /// Every few minutes, as Settings › Notifications says: the inbox, which
+    /// brings review requests and assignments, then comments. Only while the
+    /// app runs.
+    private func startPolling() {
+        guard polling == nil, !isScripted else { return }
+        polling = Task { [weak self] in
+            while !Task.isCancelled {
+                let minutes = NotificationPreferences(defaults: .standard).checkMinutes
+                try? await Task.sleep(for: .seconds(minutes * 60))
+                guard let self else { return }
+                async let inbox: Void = refreshInbox()
+                async let comments: Void = checkComments()
+                _ = await (inbox, comments)
+            }
+        }
+    }
+
+    /// Notifies about requests and assignments the last look did not see.
+    /// The very first look, and the one after the tracked repositories
+    /// change, only records.
+    private func noticeRequests() {
+        guard !isScripted else { return }
+        if let seen = activity.requestKeys, !reseedsRequests {
+            let preferences = NotificationPreferences(defaults: .standard)
+            ActivityNotifier.notify(ActivityDetector.requests(in: inbox, seen: seen, preferences: preferences))
+        }
+        reseedsRequests = false
+        activity.requestKeys = ActivityDetector.requestKeys(in: inbox)
+        saveActivity()
+    }
+
+    /// Replies and comments since the last check, looking back half an hour
+    /// further for comments GitHub's search had not indexed yet — and at
+    /// most a day, after the app has been closed a while.
+    private func checkComments() async {
+        guard let services, !isScripted, !isCheckingComments else { return }
+        let preferences = NotificationPreferences(defaults: .standard)
+        guard preferences.wantsComments else {
+            // Turned back on later, the first check records again rather
+            // than reporting everything since it was turned off.
+            activity.commentsCheckedAt = nil
+            activity.seenComments = []
+            saveActivity()
+            return
+        }
+        isCheckingComments = true
+        defer { isCheckingComments = false }
+        let now = Date.now
+        let lastChecked = activity.commentsCheckedAt
+        let since = max((lastChecked ?? now).addingTimeInterval(-30 * 60), now.addingTimeInterval(-24 * 60 * 60))
+        guard let fetched = try? await services.activity(in: trackedRepositories, since: since) else { return }
+        if lastChecked != nil {
+            ActivityNotifier.notify(ActivityDetector.comments(
+                in: fetched.pullRequests, viewer: fetched.viewer, since: since,
+                seen: activity.seenComments, preferences: preferences
+            ))
+        }
+        activity.commentsCheckedAt = now
+        activity.seenComments = ActivityDetector.commentIDs(in: fetched.pullRequests, since: since)
+        saveActivity()
+    }
+
+    private func saveActivity() {
+        try? services?.activityStore.save(activity)
     }
 
     // MARK: Tracked repositories
@@ -409,6 +510,7 @@ final class AppModel {
 
     private func didChangeTrackedRepositories() {
         try? services?.trackedRepositories.save(trackedRepositories)
+        reseedsRequests = true
         browser.didChangeTrackedRepositories(trackedRepositories)
         Task { await refreshInbox() }
     }

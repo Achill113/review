@@ -13,7 +13,7 @@ pages results with `--paginate`. The app never sees a token.
 | Existing review threads, with resolved/outdated state | `gh api graphql` — `pullRequest.reviewThreads`, since REST has no resolved flag |
 | The reviewer's pending review, if one exists | `gh api repos/{o}/{r}/pulls/{n}/reviews`, filtered to `state == PENDING` for the viewer |
 | Title, status and author of every open PR, for the sidebar's groups | `gh api graphql` — one `repository(…) { pullRequest(…) { title state isDraft author { login } } }` alias per PR, fifty to a request |
-| The inbox: Waiting on You, Your Pull Requests | Three `gh search prs --state=open` runs in parallel — `--review-requested=@me`, `--assignee=@me`, `--author=@me` — each with one `--repo` per tracked repository (none means all of GitHub), merged by PR with every reason kept |
+| The inbox: Waiting on You, Your Pull Requests | Four `gh search prs --state=open` runs in parallel — `user-review-requested:@me` (by name), `--review-requested=@me` (by name or through a team), `--assignee=@me`, `--author=@me` — each with one `--repo` per tracked repository (none means all of GitHub), merged by PR with every reason kept |
 
 ## Tracked repositories and the inbox
 
@@ -104,3 +104,6 @@ All three drafts were marked posted with that URL. Then `review reply` added a
 reply to one thread and `review resolve` resolved it; `review threads` read
 both back. Posting from the app's sheet goes through the same
 `ReviewPublisher.post`, but has not itself been pressed.
+
+Notifications for new requests, assignments, replies and comments are built on
+the inbox and one more GraphQL search; see plans/notifications.md.

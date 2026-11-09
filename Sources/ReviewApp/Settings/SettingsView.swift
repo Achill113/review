@@ -3,7 +3,7 @@ import SwiftUI
 /// The Settings window's tabs.
 struct SettingsView: View {
     enum Tab: String {
-        case repositories, fileOrder
+        case repositories, fileOrder, notifications
     }
 
     /// Stored so the file list's Edit File Order… can open its tab.
@@ -18,6 +18,9 @@ struct SettingsView: View {
             FileOrderSettings()
                 .tabItem { Label("File Order", systemImage: "list.number") }
                 .tag(Tab.fileOrder)
+            NotificationSettings()
+                .tabItem { Label("Notifications", systemImage: "bell.badge") }
+                .tag(Tab.notifications)
         }
     }
 }

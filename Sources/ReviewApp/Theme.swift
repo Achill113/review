@@ -109,6 +109,8 @@ enum Theme {
     // MARK: Settings
     static let settingsWidth: CGFloat = 460
     static let settingsHeight: CGFloat = 360
+    /// Taller: five switches with a line each, and the interval.
+    static let notificationSettingsHeight: CGFloat = 520
 
     // MARK: Panes
     /// Standard horizontal inset for pane content.

@@ -26,7 +26,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         [.banner, .sound]
     }
 
-    /// Clicking an answer's notification goes to that PR and that draft.
+    /// Clicking an answer's notification goes to that PR and that draft; an
+    /// activity notification goes to the PR, and its thread if it has one.
     nonisolated func userNotificationCenter(
         _ center: UNUserNotificationCenter,
         didReceive response: UNNotificationResponse
@@ -34,10 +35,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         let info = response.notification.request.content.userInfo
         let pullRequest = info[AnswerNotifier.pullRequestKey] as? String
         let draft = (info[AnswerNotifier.draftKey] as? String).flatMap(UUID.init(uuidString:))
+        let thread = info[ActivityNotifier.threadKey] as? String
         await MainActor.run {
             NSApp.activate()
             guard let pullRequest, let model = self.model else { return }
-            model.reveal(pullRequest: pullRequest, draft: draft)
+            if let thread {
+                model.reveal(pullRequest: pullRequest, thread: thread.isEmpty ? nil : thread)
+            } else {
+                model.reveal(pullRequest: pullRequest, draft: draft)
+            }
         }
     }
 }
