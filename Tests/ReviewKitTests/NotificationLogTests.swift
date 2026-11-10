@@ -93,3 +93,72 @@ struct NotificationLogTests {
         #expect(failure.title == "Claude couldn't answer")
     }
 }
+
+@Suite
+struct DeliveredNotificationTests {
+    private func delivered(
+        _ title: String,
+        identifier: String = UUID().uuidString,
+        info: [String: String] = [:]
+    ) -> DeliveredNotification {
+        DeliveredNotification(
+            identifier: identifier, date: Date(timeIntervalSince1970: 100), title: title,
+            subtitle: "Fix the parser", body: "Looks good",
+            userInfo: ["pullRequest": "acme/api#12"].merging(info) { _, new in new }
+        )
+    }
+
+    @Test("Rebuilds a record with its ID, thread and kind")
+    func rebuildsCurrent() throws {
+        let id = UUID()
+        let record = try #require(NotificationRecord(delivered: delivered(
+            "ana replied", info: ["record": id.uuidString, "thread": "T1"]
+        )))
+        #expect(record.id == id)
+        #expect(record.kind == .reply)
+        #expect(record.threadID == "T1")
+        #expect(record.reference == PullRequestReference(owner: "acme", repository: "api", number: 12))
+        #expect(!record.isRead)
+    }
+
+    @Test("Rebuilds an older build's notifications from their wording")
+    func rebuildsOlder() throws {
+        let identifier = UUID()
+        let answer = try #require(NotificationRecord(delivered: delivered(
+            "Claude answered", identifier: identifier.uuidString, info: ["draft": ""]
+        )))
+        #expect(answer.kind == .answer)
+        #expect(answer.draftID == nil)
+        #expect(answer.id == identifier)
+        let kinds = [
+            "bo asked you to review": NotificationRecord.Kind.reviewRequested,
+            "bo asked your team to review": .teamReviewRequested,
+            "You were assigned": .assigned,
+            "3 replies, latest from ana": .reply,
+            "7 comments, latest from cy": .comment,
+            "Claude couldn't answer": .answerFailed,
+        ]
+        for (title, kind) in kinds {
+            #expect(NotificationRecord(delivered: delivered(title, info: ["thread": ""]))?.kind == kind)
+        }
+    }
+
+    @Test("Skips a notification that names no pull request")
+    func needsPullRequest() {
+        let notice = DeliveredNotification(
+            identifier: "x", date: .now, title: "Hello", subtitle: "", body: "", userInfo: [:]
+        )
+        #expect(NotificationRecord(delivered: notice) == nil)
+    }
+
+    @Test("Adding a record already in the log keeps the log's copy")
+    func noDuplicates() throws {
+        let reference = PullRequestReference(owner: "acme", repository: "api", number: 12)
+        let original = NotificationRecord(kind: .comment, reference: reference, title: "a", subtitle: "", body: "", isRead: true)
+        var log = NotificationLog(records: [original])
+        var copy = original
+        copy.isRead = false
+        log.add([copy])
+        #expect(log.records == [original])
+    }
+}

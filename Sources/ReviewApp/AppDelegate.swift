@@ -33,8 +33,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         didReceive response: UNNotificationResponse
     ) async {
         let info = response.notification.request.content.userInfo
-        let id = (info[SystemNotifier.recordKey] as? String).flatMap(UUID.init(uuidString:))
-        let pullRequest = info[SystemNotifier.pullRequestKey] as? String
+        let id = (info[DeliveredNotification.Key.record] as? String).flatMap(UUID.init(uuidString:))
+        let pullRequest = info[DeliveredNotification.Key.pullRequest] as? String
         await MainActor.run {
             NSApp.activate()
             guard let model = self.model else { return }

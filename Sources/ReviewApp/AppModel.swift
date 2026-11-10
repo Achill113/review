@@ -78,6 +78,7 @@ final class AppModel {
                 fileOrders = services.fileOrders.load()
                 activity = services.activityStore.load()
                 notificationLog.add(services.notificationLog.load().records)
+                await recoverDeliveredNotifications()
                 await checkTools()
                 await refresh()
                 startPolling()
@@ -548,16 +549,32 @@ final class AppModel {
     func removeNotification(id: NotificationRecord.ID) {
         notificationLog.remove(id: id)
         saveNotificationLog()
+        SystemNotifier.removeDelivered(ids: [id])
     }
 
     func removeAllNotifications() {
         notificationLog.removeAll()
         saveNotificationLog()
+        SystemNotifier.removeAllDelivered()
+    }
+
+    /// Takes back any of this app's notifications still in Notification
+    /// Center that the log lacks: from before the panel, or a lost save.
+    private func recoverDeliveredNotifications() async {
+        guard !isScripted else { return }
+        let missing = await SystemNotifier.delivered().compactMap(NotificationRecord.init(delivered:))
+        let before = notificationLog.records.count
+        notificationLog.add(missing)
+        if notificationLog.records.count != before { saveNotificationLog() }
     }
 
     private func saveNotificationLog() {
-        guard !isScripted else { return }
-        try? services?.notificationLog.save(notificationLog)
+        guard !isScripted, let services else { return }
+        do {
+            try services.notificationLog.save(notificationLog)
+        } catch {
+            NSLog("Review: notifications not saved to \(services.notificationLog.file.path): \(error)")
+        }
     }
 
     // MARK: Tracked repositories

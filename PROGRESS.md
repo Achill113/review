@@ -798,3 +798,17 @@ list. Collapsed files and closed gaps are not searched. See
 plans/code-viewer.md. Checked by snapshot (`--find`) in Diff, and in Split
 across all files. Typing in the bar, Return and ⌘G were not driven by hand,
 only through the same `performTextFinderAction` calls the menu makes.
+
+## Notifications: gray bell, and surviving a relaunch
+
+The empty bell was red: a monochrome symbol given `.foregroundStyle(.red,
+.primary)` takes the first style. It is now the plain gray symbol until
+something is unread. The installed app had never written
+`notifications.json`, so after a relaunch the panel came up empty. At launch
+the app now adds back any of its notifications still in Notification Center
+that the log lacks, including ones from builds before the panel. Deleting in
+the panel removes them from Notification Center too, and a failed save is
+logged instead of swallowed. Checked end to end with Review Dev: one review
+request made to look new, the app saved it and two real comment notices on its
+first poll, was quit, and the relaunched panel showed all three. Bell checked
+by snapshot read and unread. **Tests: 238.**
