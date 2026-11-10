@@ -122,10 +122,15 @@ final class AppModel {
         if let hover = options.hover {
             await selected.performWhenReady(.definition, line: 0, column: 0, onlyWait: true)
             if let row = selected.document?.row(forNewLine: hover.line, file: selected.selectedFileIndex),
-               let textView = Self.codeTextView(in: NSApp.windows.first?.contentView)
+               let window = NSApp.windows.first, let textView = CodeFinder.target(in: window)
             {
                 await textView.triggerHover(at: textView.rowStarts[row] + hover.column)
             }
+        }
+        if let text = options.findText {
+            // After the text is laid out, or the bar has nothing to search.
+            try? await Task.sleep(for: .seconds(1))
+            CodeFinder.find(text, in: NSApp.windows.first)
         }
         if let snapshotPath = options.snapshotPath {
             // Let the document build and the text view lay out.
@@ -133,16 +138,6 @@ final class AppModel {
             LaunchOptions.writeSnapshot(to: snapshotPath)
             NSApplication.shared.terminate(nil)
         }
-    }
-
-    /// The first code view in a view tree, for launch-option scripting.
-    private static func codeTextView(in view: NSView?) -> CodeTextView? {
-        guard let view else { return nil }
-        if let found = view as? CodeTextView { return found }
-        for subview in view.subviews {
-            if let found = codeTextView(in: subview) { return found }
-        }
-        return nil
     }
 
     func checkTools() async {

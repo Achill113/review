@@ -33,6 +33,8 @@ import ReviewKit
 ///   (`1.5`, `0.75`); the reviewer's own zoom is left as it was.
 /// - `--hover <line>:<column>` shows the hover for the symbol at a head-side
 ///   line and UTF-16 column, once the servers are ready.
+/// - `--find <text>` opens the code view's find bar searching for the text and
+///   selects the first match. It sets the system-wide find pasteboard, as ⌘E does.
 ///
 /// Every option is a `--flag value` pair, or a flag alone at the end. AppKit
 /// reads `-key value` pairs from the command line as defaults and treats a
@@ -61,6 +63,7 @@ struct LaunchOptions {
     let opensSettings: Bool
     let settingsTab: SettingsView.Tab?
     let hover: (line: Int, column: Int)?
+    let findText: String?
     /// Nil without `--browse`; `.some(nil)` for `--browse on`.
     let browseScope: BrowseScope??
     let searchKeywords: String?
@@ -110,6 +113,7 @@ struct LaunchOptions {
         settingsTab = settings.flatMap(SettingsView.Tab.init(rawValue:))
         let hoverParts = value(after: "--hover")?.split(separator: ":").compactMap { Int($0) } ?? []
         hover = hoverParts.count == 2 ? (hoverParts[0], hoverParts[1]) : nil
+        findText = value(after: "--find")
         browseScope = value(after: "--browse").map { value -> BrowseScope? in
             switch value {
             case "tracked": .tracked

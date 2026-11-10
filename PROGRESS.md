@@ -771,3 +771,15 @@ with zoom) of blank space above it, as `paragraphSpacingBefore`.
 heading's band, the gutter and badges stay one row tall. A click in the gap
 does not fold the file. AppKit layout in the app target has no test target,
 so this was checked by snapshot (`--continuous on`).
+
+## Find in the code viewer (⌘F)
+
+Edit › Find now has Find… ⌘F, Find Next ⌘G, Find Previous ⇧⌘G and Use
+Selection for Find ⌘E, opening the code view's native find bar. The bar was
+already enabled on the text view, but a SwiftUI `Window` has no Find menu,
+so ⌘F never reached it. `CodeFinder` sends each action to the focused code
+view, or the main (head) pane when focus is elsewhere, such as the file
+list. Collapsed files and closed gaps are not searched. See
+plans/code-viewer.md. Checked by snapshot (`--find`) in Diff, and in Split
+across all files. Typing in the bar, Return and ⌘G were not driven by hand,
+only through the same `performTextFinderAction` calls the menu makes.
