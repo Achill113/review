@@ -49,7 +49,7 @@ struct CodeDetail: View {
                     .help("Forward (⌃⌘→)")
             }
             ToolbarItem(placement: .primaryAction) {
-                Picker("View", selection: $session.mode) {
+                Picker("View", selection: Binding(get: { session.mode }, set: { session.choose($0) })) {
                     Text("Diff").tag(CodeDocument.Mode.diff)
                     Text("Split").tag(CodeDocument.Mode.split)
                     Text("File").tag(CodeDocument.Mode.file)

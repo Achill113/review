@@ -260,7 +260,7 @@ extension ReviewSession {
             } else {
                 pendingReveal = nil
             }
-        } else if mode == .diff, externalFile == nil {
+        } else if mode != .file, externalFile == nil {
             mode = .file
         } else {
             pendingReveal = nil

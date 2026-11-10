@@ -69,12 +69,18 @@ final class ReviewSession {
     }
     /// A file outside the PR's changes, shown because navigation landed in it.
     var externalFile: URL?
-    var mode: CodeDocument.Mode = .diff
+    /// Set directly when the app switches views itself; `choose(_:)` is the reviewer's pick.
+    var mode = ModePreference().mode
     /// Every file in one scroll, GitHub-style, rather than one at a time.
     var isContinuous = UserDefaults.standard.object(forKey: ReviewSession.continuousKey) as? Bool ?? true {
         didSet { UserDefaults.standard.set(isContinuous, forKey: Self.continuousKey) }
     }
     static let continuousKey = "showAllFilesInOneScroll"
+
+    func choose(_ mode: CodeDocument.Mode) {
+        self.mode = mode
+        ModePreference().remember(mode)
+    }
     /// Files whose header the reviewer clicked, flipping them from collapsed
     /// (viewed or generated) to open, or open to collapsed.
     var toggledFiles: Set<String> = []
