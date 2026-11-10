@@ -72,6 +72,9 @@ struct RootView: View {
                 ToolbarItem {
                     RefreshButton()
                 }
+                ToolbarItem {
+                    NotificationsButton()
+                }
             }
             .navigationSplitViewColumnWidth(
                 min: Theme.sidebarMinWidth,

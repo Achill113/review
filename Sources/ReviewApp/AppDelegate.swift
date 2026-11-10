@@ -26,23 +26,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         [.banner, .sound]
     }
 
-    /// Clicking an answer's notification goes to that PR and that draft; an
-    /// activity notification goes to the PR, and its thread if it has one.
+    /// Clicking a notification opens what it is about, as its row in the
+    /// notifications panel does, and marks it read there.
     nonisolated func userNotificationCenter(
         _ center: UNUserNotificationCenter,
         didReceive response: UNNotificationResponse
     ) async {
         let info = response.notification.request.content.userInfo
-        let pullRequest = info[AnswerNotifier.pullRequestKey] as? String
-        let draft = (info[AnswerNotifier.draftKey] as? String).flatMap(UUID.init(uuidString:))
-        let thread = info[ActivityNotifier.threadKey] as? String
+        let id = (info[SystemNotifier.recordKey] as? String).flatMap(UUID.init(uuidString:))
+        let pullRequest = info[SystemNotifier.pullRequestKey] as? String
         await MainActor.run {
             NSApp.activate()
-            guard let pullRequest, let model = self.model else { return }
-            if let thread {
-                model.reveal(pullRequest: pullRequest, thread: thread.isEmpty ? nil : thread)
-            } else {
-                model.reveal(pullRequest: pullRequest, draft: draft)
+            guard let model = self.model else { return }
+            if let id, model.notificationLog.records.contains(where: { $0.id == id }) {
+                model.openNotification(id: id)
+            } else if let pullRequest {
+                // Raised by an earlier build, or since dropped from the log.
+                model.reveal(pullRequest: pullRequest, thread: nil)
             }
         }
     }
