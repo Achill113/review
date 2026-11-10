@@ -515,6 +515,14 @@ cobra#2562 opened shows the button enabled with its menu. **Tests: 203.**
 
 ## Things that bit us
 
+**`swift test` can't find `Testing` on CLT Swift 6.3.** After the Command
+Line Tools moved to Swift 6.3.3, every test target fails with `no such module
+'Testing'`, then `Library not loaded: @rpath/lib_TestingInterop.dylib`. Until
+the Makefile handles it, pass the paths by hand
+(`D=/Library/Developer/CommandLineTools/Library/Developer`):
+`swift test -Xswiftc -F -Xswiftc $D/Frameworks -Xlinker -F -Xlinker $D/Frameworks -Xlinker -rpath -Xlinker $D/Frameworks -Xlinker -rpath -Xlinker $D/usr/lib`.
+The four `TypeScriptServerTests` failures predate this and also fail on main.
+
 **Some system views run backwards against a custom environment font.**
 With a zoomed `.font` on the window, `ContentUnavailableView` and the
 sidebar's `Label` rows got *smaller* as the zoom grew. Setting the font on
@@ -743,3 +751,14 @@ one notice. Settings tab checked by snapshot (`--settings notifications`).
 one — that needs the reviewer to allow notifications and wait for activity.
 **Tests: 223.**
 
+
+## Remembered Diff/Split layout
+
+A review opens in whichever of Diff or Split the reviewer last picked,
+stored under `diffLayout` by `ModePreference` (ReviewKit). Only the reviewer's
+picks are saved, through `ReviewSession.choose(_:)` from the toolbar and
+⌘1–⌘3. The app's own switches set `mode` directly and are not saved: to
+Whole File to reach a hidden line, or to Diff for a base-side thread. Whole
+File is never remembered. A jump to a hidden line now falls back to Whole
+File from Split as well as from Diff. Checked by snapshot with `diffLayout`
+set to `split` and no `--mode`. **Tests: 233.**

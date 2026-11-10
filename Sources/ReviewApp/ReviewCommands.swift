@@ -22,13 +22,13 @@ struct ReviewCommands: Commands {
 
     var body: some Commands {
         CommandGroup(before: .toolbar) {
-            Button("Show Diff") { session?.mode = .diff }
+            Button("Show Diff") { session?.choose(.diff) }
                 .keyboardShortcut("1", modifiers: .command)
                 .disabled(session?.selectedFile == nil)
-            Button("Show Side by Side") { session?.mode = .split }
+            Button("Show Side by Side") { session?.choose(.split) }
                 .keyboardShortcut("2", modifiers: .command)
                 .disabled(session?.selectedFile == nil)
-            Button("Show Whole File") { session?.mode = .file }
+            Button("Show Whole File") { session?.choose(.file) }
                 .keyboardShortcut("3", modifiers: .command)
                 .disabled(session?.selectedFile == nil)
             Button(session?.isContinuous == true ? "Show One File at a Time" : "Show All Files in One Scroll") {
