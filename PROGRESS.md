@@ -786,3 +786,15 @@ read. `ActivityNotifier` and `AnswerNotifier` became one `SystemNotifier` that
 posts `NotificationRecord`s. Checked by snapshot (`--notifications on`) with
 seeded records. **Not yet seen end to end:** a live poll adding a row.
 **Tests: 239.**
+
+## Find in the code viewer (⌘F)
+
+Edit › Find now has Find… ⌘F, Find Next ⌘G, Find Previous ⇧⌘G and Use
+Selection for Find ⌘E, opening the code view's native find bar. The bar was
+already enabled on the text view, but a SwiftUI `Window` has no Find menu,
+so ⌘F never reached it. `CodeFinder` sends each action to the focused code
+view, or the main (head) pane when focus is elsewhere, such as the file
+list. Collapsed files and closed gaps are not searched. See
+plans/code-viewer.md. Checked by snapshot (`--find`) in Diff, and in Split
+across all files. Typing in the bar, Return and ⌘G were not driven by hand,
+only through the same `performTextFinderAction` calls the menu makes.

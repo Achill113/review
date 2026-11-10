@@ -19,8 +19,29 @@ row is one fragment. The alternatives and why not:
   third-party dependency; ask before adding it. Start with `NSTextView` and
   reach for it only if gutter or line-decoration work gets painful.
 
-Either TextKit gives native find (⌘F), selection, copy, and accessibility
-for free.
+Either TextKit gives native find, selection, copy, and accessibility for
+free.
+
+### Find (⌘F)
+
+The text view's own find bar (`usesFindBar`, incremental), opened from
+Edit › Find: Find… ⌘F, Find Next ⌘G, Find Previous ⇧⌘G, Use Selection for
+Find ⌘E. A SwiftUI `Window` scene puts **no** Find menu in Edit, so until
+`FindCommands` added one, ⌘F did nothing at all.
+
+The items don't go down the responder chain: with the file list focused they
+would reach nothing, and from the find field they stop at the scroll view
+holding the bar. `CodeFinder` picks the code view owning focus (itself or its
+find bar), or else the main pane — in Split, the head side — and calls
+`performTextFinderAction` on it. Next/Previous leave focus in the find field.
+
+It searches the text that is showing: collapsed files and the unchanged
+lines in a closed gap are not in the document, so they are not found. In
+the all-files view one search covers every open file.
+
+`--find <text>` scripts it for snapshots. Writing the find pasteboard alone
+fills the field but leaves the bar searching for its previous string (0
+matches), so the option selects the first match and uses ⌘E's path instead.
 
 Highlighting a 3,700-line Go file takes 37 ms in a release build (0.16 s in
 debug); 18,000 lines take 0.14 s.
