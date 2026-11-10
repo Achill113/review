@@ -216,6 +216,7 @@ final class CodeTextView: NSTextView {
                 onExpandGap?(clicked, expansion(at: event.locationInWindow)?.lines)
                 return
             case .fileHeader:
+                if isInFileSpacing(event, row: clicked) { return }
                 onHeaderClick?(clicked)
                 return
             case .context, .added, .removed, .hunkHeader, .filler:
@@ -408,19 +409,31 @@ final class CodeTextView: NSTextView {
         var result: [(row: Int, rect: NSRect)] = []
         var row = self.row(containing: characters.location)
         while row < rowStarts.count, rowStarts[row] <= NSMaxRange(characters) {
-            let start = rowStarts[row]
-            var lineRect =
-                if start < length {
-                    layoutManager.lineFragmentRect(forGlyphAt: layoutManager.glyphIndexForCharacter(at: start), effectiveRange: nil)
-                } else {
-                    // An empty final row has no glyph; it lives in the extra fragment.
-                    layoutManager.extraLineFragmentRect
-                }
-            lineRect.origin.y += textContainerOrigin.y
-            result.append((row, lineRect))
+            result.append((row, lineRect(forRow: row, layoutManager: layoutManager, length: length)))
             row += 1
         }
         return result
+    }
+
+    /// The row's line, in this view's coordinates, without the space above a file's heading.
+    private func lineRect(forRow row: Int, layoutManager: NSLayoutManager, length: Int) -> NSRect {
+        let start = rowStarts[row]
+        guard start < length else {
+            // An empty final row has no glyph; it lives in the extra fragment.
+            return layoutManager.extraLineFragmentRect.offsetBy(dx: 0, dy: textContainerOrigin.y)
+        }
+        var rect = layoutManager.lineFragmentRect(forGlyphAt: layoutManager.glyphIndexForCharacter(at: start), effectiveRange: nil)
+        let style = textStorage?.attribute(.paragraphStyle, at: start, effectiveRange: nil) as? NSParagraphStyle
+        let spacing = min(style?.paragraphSpacingBefore ?? 0, rect.height)
+        rect.origin.y += spacing + textContainerOrigin.y
+        rect.size.height -= spacing
+        return rect
+    }
+
+    private func isInFileSpacing(_ event: NSEvent, row: Int) -> Bool {
+        guard let layoutManager else { return false }
+        let point = convert(event.locationInWindow, from: nil)
+        return point.y < lineRect(forRow: row, layoutManager: layoutManager, length: textStorage?.length ?? 0).minY
     }
 
     override func drawBackground(in rect: NSRect) {

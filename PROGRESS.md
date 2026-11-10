@@ -743,3 +743,12 @@ one notice. Settings tab checked by snapshot (`--settings notifications`).
 one — that needs the reviewer to allow notifications and wait for activity.
 **Tests: 223.**
 
+
+## Space between files in the all-files view
+
+Each file heading after the first has `Theme.Code.fileSpacing` (24pt, scaled
+with zoom) of blank space above it, as `paragraphSpacingBefore`.
+`CodeTextView.visibleRows` trims that space off the row's rect, so the
+heading's band, the gutter and badges stay one row tall. A click in the gap
+does not fold the file. AppKit layout in the app target has no test target,
+so this was checked by snapshot (`--continuous on`).
