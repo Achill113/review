@@ -31,6 +31,8 @@ import ReviewKit
 /// - `--search <words>` types words into the browser's search field.
 /// - `--zoom <scale>` zooms text and controls for this launch only
 ///   (`1.5`, `0.75`); the reviewer's own zoom is left as it was.
+/// - `--notifications on` opens the notifications panel; a snapshot writes it
+///   as `-popover.png`.
 /// - `--hover <line>:<column>` shows the hover for the symbol at a head-side
 ///   line and UTF-16 column, once the servers are ready.
 /// - `--find <text>` opens the code view's find bar searching for the text and
@@ -60,6 +62,7 @@ struct LaunchOptions {
     let opensPostSheet: Bool
     let showsInspector: Bool
     let showsSidebar: Bool
+    let showsNotifications: Bool
     let opensSettings: Bool
     let settingsTab: SettingsView.Tab?
     let hover: (line: Int, column: Int)?
@@ -108,6 +111,7 @@ struct LaunchOptions {
         opensPostSheet = arguments.contains("--post-sheet")
         showsInspector = value(after: "--inspector") == "on"
         showsSidebar = value(after: "--sidebar") == "on"
+        showsNotifications = value(after: "--notifications") == "on"
         let settings = value(after: "--settings")
         opensSettings = settings != nil && settings != "off"
         settingsTab = settings.flatMap(SettingsView.Tab.init(rawValue:))

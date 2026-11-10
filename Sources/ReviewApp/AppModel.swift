@@ -50,6 +50,11 @@ final class AppModel {
     /// group them before each is loaded.
     private(set) var summaries: [PullRequestReference: PullRequestSummary] = [:]
 
+    /// Every notification raised, for the in-app panel.
+    private(set) var notificationLog = NotificationLog()
+    /// The notifications popover in the sidebar's toolbar.
+    var isNotificationsShown = false
+
     /// What notifications have covered already; see `ActivityStore`.
     private var activity = ActivityStore.State()
     private var isCheckingComments = false
@@ -72,6 +77,7 @@ final class AppModel {
                 browser.start(with: services, tracked: trackedRepositories)
                 fileOrders = services.fileOrders.load()
                 activity = services.activityStore.load()
+                notificationLog.add(services.notificationLog.load().records)
                 await checkTools()
                 await refresh()
                 startPolling()
@@ -90,6 +96,7 @@ final class AppModel {
             if let scope { browser.scope = scope }
             if let keywords = options.searchKeywords { browser.filter.keywords = keywords }
         }
+        if options.showsNotifications { isNotificationsShown = true }
         guard let pullRequest = options.pullRequest, (try? open(pullRequest)) != nil, let selected = selectedSession else {
             if let snapshotPath = options.snapshotPath {
                 try? await Task.sleep(for: .seconds(4))
@@ -159,7 +166,7 @@ final class AppModel {
     func open(_ reference: PullRequestReference) {
         if !pullRequests.contains(reference) {
             pullRequests.insert(reference, at: 0)
-            sessions[reference] = ReviewSession(reference: reference)
+            sessions[reference] = makeSession(reference)
             saveOpenPullRequests()
             if summaries[reference] == nil {
                 Task { await refreshSummaries(of: [reference]) }
@@ -167,6 +174,12 @@ final class AppModel {
         }
         selection = reference
         isBrowsing = false
+    }
+
+    private func makeSession(_ reference: PullRequestReference) -> ReviewSession {
+        let session = ReviewSession(reference: reference)
+        session.deliverNotification = { [weak self] in self?.deliver([$0]) }
+        return session
     }
 
     func close(_ reference: PullRequestReference) {
@@ -340,7 +353,7 @@ final class AppModel {
     private func restoreOpenPullRequests(from workspace: WorkspaceStore) {
         for reference in workspace.load() where !pullRequests.contains(reference) {
             pullRequests.append(reference)
-            sessions[reference] = ReviewSession(reference: reference)
+            sessions[reference] = makeSession(reference)
         }
         if selection == nil { selection = pullRequests.first }
         // A link that launched the app may have opened a PR before there was
@@ -446,7 +459,7 @@ final class AppModel {
         guard !isScripted else { return }
         if let seen = activity.requestKeys, !reseedsRequests {
             let preferences = NotificationPreferences(defaults: .standard)
-            ActivityNotifier.notify(ActivityDetector.requests(in: inbox, seen: seen, preferences: preferences))
+            deliver(ActivityDetector.requests(in: inbox, seen: seen, preferences: preferences))
         }
         reseedsRequests = false
         activity.requestKeys = ActivityDetector.requestKeys(in: inbox)
@@ -474,7 +487,7 @@ final class AppModel {
         let since = max((lastChecked ?? now).addingTimeInterval(-30 * 60), now.addingTimeInterval(-24 * 60 * 60))
         guard let fetched = try? await services.activity(in: trackedRepositories, since: since) else { return }
         if lastChecked != nil {
-            ActivityNotifier.notify(ActivityDetector.comments(
+            deliver(ActivityDetector.comments(
                 in: fetched.pullRequests, viewer: fetched.viewer, since: since,
                 seen: activity.seenComments, preferences: preferences
             ))
@@ -486,6 +499,65 @@ final class AppModel {
 
     private func saveActivity() {
         try? services?.activityStore.save(activity)
+    }
+
+    // MARK: The notifications panel
+
+    private func deliver(_ notices: [ActivityNotice]) {
+        let now = Date.now
+        deliver(notices.map { NotificationRecord(notice: $0, date: now) })
+    }
+
+    /// Keeps notifications for the panel, then shows them as macOS
+    /// notifications — kept even when macOS will not show them.
+    private func deliver(_ records: [NotificationRecord]) {
+        guard !records.isEmpty, !isScripted else { return }
+        notificationLog.add(records)
+        saveNotificationLog()
+        SystemNotifier.post(records)
+    }
+
+    /// Opens what a notification is about — the thread, the draft, or the
+    /// pull request — and marks it read.
+    func open(_ record: NotificationRecord) {
+        setRead(true, id: record.id)
+        switch record.kind {
+        case .answer, .answerFailed:
+            reveal(pullRequest: record.reference.description, draft: record.draftID)
+        case .reviewRequested, .teamReviewRequested, .assigned, .reply, .comment:
+            reveal(pullRequest: record.reference.description, thread: record.threadID)
+        }
+    }
+
+    /// From a click on a macOS notification.
+    func openNotification(id: UUID) {
+        guard let record = notificationLog.records.first(where: { $0.id == id }) else { return }
+        open(record)
+    }
+
+    func setRead(_ isRead: Bool, id: NotificationRecord.ID) {
+        notificationLog.setRead(isRead, id: id)
+        saveNotificationLog()
+    }
+
+    func markAllNotificationsRead() {
+        notificationLog.markAllRead()
+        saveNotificationLog()
+    }
+
+    func removeNotification(id: NotificationRecord.ID) {
+        notificationLog.remove(id: id)
+        saveNotificationLog()
+    }
+
+    func removeAllNotifications() {
+        notificationLog.removeAll()
+        saveNotificationLog()
+    }
+
+    private func saveNotificationLog() {
+        guard !isScripted else { return }
+        try? services?.notificationLog.save(notificationLog)
     }
 
     // MARK: Tracked repositories

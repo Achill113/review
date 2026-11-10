@@ -36,6 +36,8 @@ struct ReviewApp: App {
             CommandGroup(after: .sidebar) {
                 Button("Browse Pull Requests") { model.showBrowser() }
                     .keyboardShortcut("b", modifiers: [.command, .shift])
+                Button("Show Notifications") { model.isNotificationsShown = true }
+                    .keyboardShortcut("n", modifiers: [.command, .option])
                 Button("Refresh Pull Requests") { Task { await model.refresh() } }
                     .keyboardShortcut("r", modifiers: .command)
                 Button("Close Merged and Closed Pull Requests") { model.closeFinished() }
