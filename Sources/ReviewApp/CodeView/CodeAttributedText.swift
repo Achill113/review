@@ -20,15 +20,24 @@ enum CodeAttributedText {
         )
         let length = result.length
 
+        let separatedParagraph = paragraph.mutableCopy() as! NSMutableParagraphStyle
+        separatedParagraph.paragraphSpacingBefore = Theme.Code.fileSpacing
+
         var offset = 0
         result.beginEditing()
-        for row in rows {
+        for (index, row) in rows.enumerated() {
             let rowLength = (row.text as NSString).length
             if row.kind == .fileHeader {
                 result.addAttributes(
                     [.font: Theme.Code.fileHeaderFont, .foregroundColor: Theme.Code.fileHeaderText],
                     range: NSRange(location: offset, length: rowLength)
                 )
+                if index > 0 {
+                    result.addAttribute(
+                        .paragraphStyle, value: separatedParagraph,
+                        range: NSRange(location: offset, length: rowLength)
+                    )
+                }
             }
             if row.kind == .hunkHeader || row.kind == .gap {
                 result.addAttribute(
