@@ -114,6 +114,11 @@ enum Theme {
     static var summaryHeight: CGFloat { scaled(90) }
     static var sheetPadding: CGFloat { scaled(20) }
 
+    // MARK: Update sheet
+    static var updateSheetWidth: CGFloat { scaled(480) }
+    static var updateIconSize: CGFloat { scaled(64) }
+    static var updateCommitsMaxHeight: CGFloat { scaled(180) }
+
     // MARK: Settings
     static let settingsWidth: CGFloat = 460
     static let settingsHeight: CGFloat = 360

@@ -812,3 +812,20 @@ logged instead of swallowed. Checked end to end with Review Dev: one review
 request made to look new, the app saved it and two real comment notices on its
 first poll, was quit, and the relaunched panel showed all three. Bell checked
 by snapshot read and unread. **Tests: 238.**
+
+## Update from main
+
+The installed copy notices new commits on `origin/main` and rebuilds itself.
+promote.sh stamps the checkout it was run from into Info.plist
+(`ReviewSource`). The app fetches main there at launch and then hourly. Each
+new head of main raises one macOS banner, and while an update is waiting the
+sidebar footer shows a row for it. Review › Check for Updates… checks on
+demand. The sheet lists the new commits. **Update and Relaunch** runs
+promote.sh with `PROMOTE_WAIT_PID`: once the build is ready the app quits
+itself, and the script installs the build and reopens it. The script no longer
+needs to quit the app through AppleScript. See plans/updates.md. Checked by snapshot (`--update-source "$PWD"
+--update-commit d67fdd6`): five commits listed. **Not yet seen end to end:**
+the installed app has no `ReviewSource` until the next `make install`, so no
+real banner has been posted and Update and Relaunch has not run for real; the
+sidebar row was not seen, as the sidebar draws blank in snapshots. **Tests: 248**
+(the four TypeScriptServerTests failures predate this).

@@ -35,10 +35,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         let info = response.notification.request.content.userInfo
         let id = (info[DeliveredNotification.Key.record] as? String).flatMap(UUID.init(uuidString:))
         let pullRequest = info[DeliveredNotification.Key.pullRequest] as? String
+        let isUpdate = info[SystemNotifier.updateKey] != nil
         await MainActor.run {
             NSApp.activate()
             guard let model = self.model else { return }
-            if let id, model.notificationLog.records.contains(where: { $0.id == id }) {
+            if isUpdate {
+                model.updater.isSheetShown = true
+            } else if let id, model.notificationLog.records.contains(where: { $0.id == id }) {
                 model.openNotification(id: id)
             } else if let pullRequest {
                 // Raised by an earlier build, or since dropped from the log.

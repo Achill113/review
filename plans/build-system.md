@@ -63,7 +63,8 @@ installed one, and `AppVariant.current` reads it. So `./.build/debug/review`
 is a dev CLI and reads the dev data; the `review` inside the installed bundle
 reads the reviewer's. `build.sh` and `AppVariant` must agree on the names.
 
-Both stamp `ReviewCommit` into Info.plist (`+dirty` for uncommitted changes),
+promote.sh also passes `SOURCE` (the checkout it was run from), stamped as
+`ReviewSource`; it is empty in every other build. Both stamp `ReviewCommit` into Info.plist (`+dirty` for uncommitted changes),
 and the About panel shows it as the build: "Version 0.1.0 (2f3ee44)".
 
 **`make install` → `scripts/promote.sh`.** It fetches `origin/main` into its
@@ -77,9 +78,9 @@ that id — for the reviewer to delete; a dev build in a checkout removes its ow
 
 Not built yet, and why: a GitHub Actions build gains nothing without a
 Developer ID — a downloaded ad-hoc-signed zip is quarantined, and its signature
-differs every build. An in-app "update from main" can sit on top of
-promote.sh later: the app knows its `ReviewCommit` and can compare it with
-`origin/main`.
+differs every build. Instead the installed app updates itself through
+promote.sh: it is stamped with the checkout it was built from (`ReviewSource`)
+and watches `origin/main` there. See updates.md.
 
 ## Everyday targets
 

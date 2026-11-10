@@ -22,6 +22,8 @@
 	<string>__BUILD_VERSION__</string>
 	<key>ReviewCommit</key>
 	<string>__COMMIT__</string>
+	<key>ReviewSource</key>
+	<string>__SOURCE__</string>
 	<key>CFBundleIconFile</key>
 	<string>AppIcon</string>
 	<key>LSMinimumSystemVersion</key>

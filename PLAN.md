@@ -34,6 +34,7 @@ and no Xcode IDE — which itself came from
 | [plans/file-order.md](plans/file-order.md) | Per-repository order for changed files |
 | [plans/browse.md](plans/browse.md) | Browsing, searching and filtering pull requests across repositories |
 | [plans/notifications.md](plans/notifications.md) | System notifications for review requests, assignments, replies and comments, and the in-app notifications panel |
+| [plans/updates.md](plans/updates.md) | The installed copy noticing new commits on main, and rebuilding itself |
 | [plans/design-system.md](plans/design-system.md) | Theme, type scale, UI shape |
 | [SWIFTUI-RULES.md](SWIFTUI-RULES.md) | House SwiftUI style — takes precedence where it conflicts |
 | [PROGRESS.md](PROGRESS.md) | What is built, what is next |

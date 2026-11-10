@@ -35,6 +35,9 @@ import ReviewKit
 ///   as `-popover.png`.
 /// - `--hover <line>:<column>` shows the hover for the symbol at a head-side
 ///   line and UTF-16 column, once the servers are ready.
+/// - `--update-source <checkout> --update-commit <sha>` checks that checkout
+///   for commits on origin/main since that one, as the installed copy does,
+///   and shows the update sheet. It never notifies or installs by itself.
 /// - `--find <text>` opens the code view's find bar searching for the text and
 ///   selects the first match. It sets the system-wide find pasteboard, as ⌘E does.
 ///
@@ -71,6 +74,8 @@ struct LaunchOptions {
     let browseScope: BrowseScope??
     let searchKeywords: String?
     let zoom: Double?
+    /// `--update-source` and `--update-commit`, as `build.sh` would stamp them.
+    let updateBuild: BuildInfo?
     let snapshotPath: String?
 
     static let current = Self(
@@ -127,6 +132,9 @@ struct LaunchOptions {
         }
         searchKeywords = value(after: "--search")
         zoom = value(after: "--zoom").flatMap(Double.init)
+        updateBuild = value(after: "--update-source").map { source in
+            BuildInfo(infoDictionary: ["ReviewSource": source, "ReviewCommit": value(after: "--update-commit") ?? ""])
+        }
         snapshotPath = environment["REVIEW_SNAPSHOT"]
     }
 

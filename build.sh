@@ -18,6 +18,8 @@
 #                      never touches the installed copy. Only scripts/promote.sh
 #                      (make install) builds the installed variant.
 #   COMMIT             commit to stamp as ReviewCommit (default: HEAD, +dirty).
+#   SOURCE             checkout to stamp as ReviewSource; the app checks it for
+#                      updates. Only scripts/promote.sh sets it.
 #
 set -euo pipefail
 
@@ -63,6 +65,9 @@ if [ -z "${COMMIT:-}" ]; then
 	fi
 fi
 
+# Escaped for sed's replacement text, delimited by |.
+SOURCE_ESCAPED="$(printf '%s' "${SOURCE:-}" | sed -e 's/[|&\\]/\\&/g')"
+
 # Build number: monotonic-ish from the date so re-signs differ. Falls back to 1.
 BUILD_NUMBER="$(date +%Y%m%d%H%M 2>/dev/null || echo 1)"
 
@@ -104,6 +109,7 @@ sed -e "s/__SHORT_VERSION__/$VERSION/g" \
     -e "s/__APP_NAME__/$APP_NAME/g" \
     -e "s/__URL_SCHEME__/$URL_SCHEME/g" \
     -e "s/__COMMIT__/$COMMIT/g" \
+    -e "s|__SOURCE__|$SOURCE_ESCAPED|g" \
     "$INFO_PLIST_SRC" > "$APP/Contents/Info.plist"
 
 # PkgInfo — classic 8-byte file some macOS code paths still look for.
