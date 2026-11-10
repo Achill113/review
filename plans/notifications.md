@@ -22,6 +22,25 @@ Clicking a notification opens the PR. A reply or comment in a review thread
 also opens the inspector on that thread, refetching threads if the PR is
 already loaded so the new comment is there.
 
+## The notifications panel
+
+The bell in the sidebar's toolbar (⌥⌘N) opens a popover listing every
+notification raised, newest first, with an unread dot on the bell. Every
+notification is a `NotificationRecord` (ReviewCore): activity notices through
+`NotificationRecord(notice:)` and Claude's answers through `.answer(…)`, worded
+exactly as the banner is. `AppModel.deliver` adds records to the
+`NotificationLog` (ReviewKit, newest first, capped at 200), saves it to
+`notifications.json` (`NotificationLogStore`), then hands them to
+`SystemNotifier` for macOS. A record is kept even when macOS will not show it,
+so turning banners off loses nothing.
+
+A row opens what it is about, as its banner does, and marks it read. A banner
+carries its record's ID, so clicking one marks the row read too. Claude's
+answers are recorded only when they would notify: an answer the reviewer is
+already watching is not a notification. `--notifications on` opens the panel
+in a scripted launch (snapshot `-popover.png`); scripted launches load the log
+but never add to or save it.
+
 ## By name versus through a team
 
 GitHub's `review-requested:@me` includes requests to your teams;

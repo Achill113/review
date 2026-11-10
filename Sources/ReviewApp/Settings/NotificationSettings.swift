@@ -90,7 +90,7 @@ struct NotificationSettings: View {
     }
 
     private func updateAuthorization() async {
-        authorization = await ActivityNotifier.authorizationStatus()
+        authorization = await SystemNotifier.authorizationStatus()
     }
 
     private func requestAuthorization() {

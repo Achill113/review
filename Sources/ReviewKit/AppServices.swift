@@ -55,6 +55,8 @@ public struct AppServices: Sendable {
 
     public var activityStore: ActivityStore { ActivityStore(root: CheckoutStore.defaultRoot) }
 
+    public var notificationLog: NotificationLogStore { NotificationLogStore(root: CheckoutStore.defaultRoot) }
+
     /// Pull requests involving the reviewer updated since `since`, with their
     /// recent comments, and the reviewer's login; nil when gh is missing.
     public func activity(

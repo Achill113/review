@@ -771,3 +771,18 @@ with zoom) of blank space above it, as `paragraphSpacingBefore`.
 heading's band, the gutter and badges stay one row tall. A click in the gap
 does not fold the file. AppKit layout in the app target has no test target,
 so this was checked by snapshot (`--continuous on`).
+
+## In-app notifications panel
+
+A bell in the sidebar's toolbar (⌥⌘N, View › Show Notifications) opens a
+popover listing every notification the app has raised, newest first: review
+requests, assignments, replies, comments, and Claude's answers. A red dot on
+the bell means some are unread. Clicking a row opens what it is about (the
+thread, the draft, or the PR) and marks it read; the context menu marks read
+or unread, opens on GitHub, or deletes. Mark All as Read and Clear sit in the
+header. Records are kept even when macOS blocks banners, saved to
+`notifications.json` (last 200), and clicking a macOS banner marks its row
+read. `ActivityNotifier` and `AnswerNotifier` became one `SystemNotifier` that
+posts `NotificationRecord`s. Checked by snapshot (`--notifications on`) with
+seeded records. **Not yet seen end to end:** a live poll adding a row.
+**Tests: 239.**

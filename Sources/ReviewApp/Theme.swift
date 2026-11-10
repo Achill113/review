@@ -97,6 +97,14 @@ enum Theme {
     static var hoverMaxWidth: CGFloat { scaled(520) }
     static var hoverMaxHeight: CGFloat { scaled(360) }
 
+    // MARK: Notifications panel
+    static var notificationsWidth: CGFloat { scaled(400) }
+    static var notificationsHeight: CGFloat { scaled(480) }
+    static var unreadDotSize: CGFloat { scaled(7) }
+    /// Room for the widest kind symbol, so titles line up.
+    static var notificationIconWidth: CGFloat { scaled(18) }
+    static var notificationRowPadding: CGFloat { scaled(4) }
+
     // MARK: Post sheet
     static var postSheetWidth: CGFloat { scaled(620) }
     /// Grows with the zoom, but never past the screen it is shown on.

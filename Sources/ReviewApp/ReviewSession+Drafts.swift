@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 import ReviewClaude
 import ReviewCore
@@ -239,7 +240,7 @@ extension ReviewSession {
         updateDraft(id) { $0.conversation.append(ConversationTurn(author: .reviewer, text: question)) }
         followUps[id] = nil
         asks[id] = AskProgress()
-        AnswerNotifier.requestPermission()
+        SystemNotifier.requestPermission()
         askTasks[id] = Task {
             await run(id) {
                 try await assistant.ask(about: draft, followUp: followUp, in: review, worktree: worktree)
@@ -276,7 +277,7 @@ extension ReviewSession {
         ))
         followUps[overviewID] = nil
         asks[overviewID] = AskProgress()
-        AnswerNotifier.requestPermission()
+        SystemNotifier.requestPermission()
         scheduleSave()
         askTasks[overviewID] = Task {
             await run(overviewID) {
@@ -295,14 +296,13 @@ extension ReviewSession {
         }
     }
 
-    /// A system notification for a finished answer, unless the reviewer is
-    /// already looking at it.
+    /// A notification for a finished answer, unless the reviewer is already
+    /// looking at it.
     private func notifyAnswered(draft: UUID?, title: String, answer: String, isError: Bool) {
-        let watching = isSelectedInApp && isInspectorShown
-        AnswerNotifier.notify(
-            pullRequest: reference, draft: draft, title: "\(title) · \(reference)",
-            answer: answer, isError: isError, isBeingWatched: watching
-        )
+        guard !(NSApp.isActive && isSelectedInApp && isInspectorShown) else { return }
+        deliverNotification?(.answer(
+            pullRequest: reference, draft: draft, title: "\(title) · \(reference)", answer: answer, isError: isError
+        ))
     }
 
     func cancelAsk(_ id: UUID) {

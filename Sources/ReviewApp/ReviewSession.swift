@@ -144,6 +144,8 @@ final class ReviewSession {
     var isPostSheetShown = false
     /// Whether this is the PR the window shows; kept by `AppModel`.
     var isSelectedInApp = false
+    /// Records and shows a notification; set by `AppModel`.
+    var deliverNotification: ((NotificationRecord) -> Void)?
 
     /// Documents already built this session, keyed like `documentKey`.
     private var documents: [String: CodeDocument] = [:]
