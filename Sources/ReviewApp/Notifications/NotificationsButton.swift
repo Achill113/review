@@ -15,9 +15,16 @@ struct NotificationsButton: View {
             Label {
                 Text("Notifications")
             } icon: {
-                Image(systemName: unread > 0 ? "bell.badge.fill" : "bell")
-                    .symbolRenderingMode(unread > 0 ? .palette : .monochrome)
-                    .foregroundStyle(.red, .primary)
+                // Gray like the other toolbar icons until something is
+                // unread; then the badge is red. A monochrome symbol takes
+                // the first of two styles, so the empty bell gets none.
+                if unread > 0 {
+                    Image(systemName: "bell.badge.fill")
+                        .symbolRenderingMode(.palette)
+                        .foregroundStyle(.red, .primary)
+                } else {
+                    Image(systemName: "bell")
+                }
             }
         }
         .help(unread > 0 ? "Notifications — \(unread) unread (⌥⌘N)" : "Notifications (⌥⌘N)")

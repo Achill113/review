@@ -16,10 +16,13 @@ public struct NotificationLog: Codable, Equatable, Sendable {
         records.count { !$0.isRead }
     }
 
-    /// Adds new records at the top, newest first, dropping the oldest past
-    /// the limit.
+    /// Adds new records in date order, newest first, dropping the oldest
+    /// past the limit. A record already here (by ID) is not added again.
     public mutating func add(_ new: [NotificationRecord]) {
-        records = Array((new + records).sorted { $0.date > $1.date }.prefix(Self.limit))
+        let known = Set(records.map(\.id))
+        let added = new.filter { !known.contains($0.id) }
+        guard !added.isEmpty else { return }
+        records = Array((added + records).sorted { $0.date > $1.date }.prefix(Self.limit))
     }
 
     public mutating func setRead(_ isRead: Bool, id: NotificationRecord.ID) {

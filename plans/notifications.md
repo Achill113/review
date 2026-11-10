@@ -34,6 +34,20 @@ exactly as the banner is. `AppModel.deliver` adds records to the
 `SystemNotifier` for macOS. A record is kept even when macOS will not show it,
 so turning banners off loses nothing.
 
+The bell is the plain gray toolbar symbol until something is unread, then
+`bell.badge.fill` with a red badge. (A monochrome symbol given two styles
+takes the first, which is how the empty bell came out red.)
+
+**Surviving a relaunch.** The log is saved on every change and loaded at
+startup. At startup the app also reads its notifications still in macOS
+Notification Center and adds back any the log lacks
+(`NotificationRecord(delivered:)`): ones raised before the panel existed, or
+lost to a failed save. Each banner's `userInfo` carries the record's ID, PR,
+thread and draft, and older builds' `pullRequest`/`thread`/`draft` keys are
+read too; the kind is inferred from the wording. Deleting or clearing in the
+panel removes the banners from Notification Center as well, so they do not
+come back. A failed save is logged with `NSLog`, not swallowed.
+
 A row opens what it is about, as its banner does, and marks it read. A banner
 carries its record's ID, so clicking one marks the row read too. Claude's
 answers are recorded only when they would notify: an answer the reviewer is
