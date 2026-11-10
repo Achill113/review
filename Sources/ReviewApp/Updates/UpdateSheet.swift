@@ -10,6 +10,7 @@ struct UpdateSheet: View {
 
     var body: some View {
         let updater = model.updater
+        let status = updater.status
 
         VStack(alignment: .leading, spacing: Theme.spacing) {
             HStack(alignment: .top, spacing: Theme.gutter) {
@@ -29,19 +30,19 @@ struct UpdateSheet: View {
                 }
             }
 
-            if let commits = updater.update?.commits, !commits.isEmpty, !isFailed(updater) {
+            if let commits = status.update?.commits, !commits.isEmpty, !isFailed(status) {
                 CommitList(commits: commits)
             }
-            if case .installFailed(let log) = updater.phase {
+            if case .installFailed(let log) = status.phase {
                 FailureLog(text: log)
             }
-            if updater.phase == .installing || updater.phase == .checking {
+            if updater.canUpdate, isBusy(status) {
                 ProgressView()
                     .progressViewStyle(.linear)
             }
 
             HStack {
-                if updater.phase == .installing || isFailed(updater) {
+                if status.phase == .installing || isInstallFailed(status) {
                     Button("Show Log") { updater.showLog() }
                 }
                 Spacer()
@@ -54,49 +55,67 @@ struct UpdateSheet: View {
 
     @ViewBuilder
     private func buttons(_ updater: Updater) -> some View {
-        if updater.update != nil, updater.canUpdate {
+        let status = updater.status
+        if updater.canUpdate, let action = status.primaryAction {
             Button("Later", role: .cancel) { dismiss() }
                 .keyboardShortcut(.cancelAction)
-                .disabled(updater.phase == .installing)
-            Button(isFailed(updater) ? "Try Again" : "Update and Relaunch") {
-                Task { await updater.install() }
+                .disabled(status.phase == .installing)
+            Button(label(action)) {
+                Task { await updater.perform(action) }
             }
             .keyboardShortcut(.defaultAction)
-            .disabled(updater.phase == .installing || updater.phase == .checking)
+            .disabled(!status.isPrimaryActionEnabled)
+            .help(status.canInstall ? "" : "A scripted launch never installs")
         } else {
             Button("OK") { dismiss() }
                 .keyboardShortcut(.defaultAction)
         }
     }
 
-    private func isFailed(_ updater: Updater) -> Bool {
-        switch updater.phase {
+    private func label(_ action: UpdateStatus.Action) -> String {
+        switch action {
+        case .install: "Update and Relaunch"
+        case .retryInstall, .retryCheck: "Try Again"
+        }
+    }
+
+    private func isBusy(_ status: UpdateStatus) -> Bool {
+        status.phase == .installing || status.phase == .checking || status.isAwaitingAnswer
+    }
+
+    private func isFailed(_ status: UpdateStatus) -> Bool {
+        switch status.phase {
         case .checkFailed, .installFailed: true
         case .idle, .checking, .installing: false
         }
     }
 
+    private func isInstallFailed(_ status: UpdateStatus) -> Bool {
+        if case .installFailed = status.phase { true } else { false }
+    }
+
     private func title(_ updater: Updater) -> String {
         let name = AppVariant.current.appName
+        let status = updater.status
         guard updater.canUpdate else { return "Updates are not checked in this copy" }
-        switch updater.phase {
-        case .checking where updater.update == nil: return "Checking for updates…"
+        guard !status.isAwaitingAnswer else { return "Checking for updates…" }
+        switch status.phase {
         case .checkFailed: return "Couldn’t check for updates"
         case .installing: return "Updating \(name)…"
         case .installFailed: return "The update failed"
         case .idle, .checking: break
         }
-        return updater.update == nil ? "\(name) is up to date" : "A new version of \(name) is available"
+        return status.update == nil ? "\(name) is up to date" : "A new version of \(name) is available"
     }
 
     private func message(_ updater: Updater) -> String {
         guard updater.canUpdate else {
             return "Only the copy installed by make install knows the checkout it was built from."
         }
+        let status = updater.status
         let installed = updater.build.commit ?? "?"
-        switch updater.phase {
-        case .checking where updater.update == nil:
-            return "Fetching main."
+        guard !status.isAwaitingAnswer else { return "Fetching main." }
+        switch status.phase {
         case .checkFailed(let error):
             return error
         case .installing:
@@ -106,7 +125,7 @@ struct UpdateSheet: View {
         case .idle, .checking:
             break
         }
-        guard let update = updater.update else { return "You have the latest commit on main (\(installed))." }
+        guard let update = status.update else { return "You have the latest commit on main (\(installed))." }
         return switch update.commits.count {
         case 0: "main has moved on from the commit you have (\(installed))."
         case 1: "1 new commit on main since \(installed)."

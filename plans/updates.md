@@ -31,6 +31,20 @@ The banner is not a `NotificationRecord`: those are about a pull request, and
 the panel and the recovery from Notification Center both assume one. Its
 `userInfo` carries `update`, and a click opens the update sheet.
 
+What the sheet may do next is decided by `UpdateStatus` (ReviewKit), a value
+type so it is tested without the app:
+
+- After a failed check the button retries the check; after a failed install
+  it retries the install. An earlier update still waiting does not turn a
+  failed check's Try Again into an install.
+- Until a check has answered, the sheet says "Checking for updates…", never
+  "up to date". Check for Updates… chosen before startup has the login-shell
+  environment waits for the launch check. A missing `git` is a failed check.
+- The hourly check does not run over a failed install, so its log stays in
+  the sheet. Asking for a check does.
+- A scripted launch (`--update-source`) has `canInstall` false: the button is
+  disabled, so a dev build cannot replace /Applications/Review.app.
+
 While an update is waiting, a row at the foot of the sidebar says so ("Update
 available: 3 new commits"), so a dismissed banner is not the only notice.
 **Review › Check for Updates…** checks now and opens the sheet either way.
@@ -67,6 +81,8 @@ branch that checkout has out, the same as running `make install` by hand.
 - `open -n --env REVIEW_SNAPSHOT=… "build/Review Dev.app" --args
   --update-source "$PWD" --update-commit <older sha>` checks this checkout as
   if it were built from that commit and shows the sheet (`-sheet.png`). It
-  never notifies or installs.
+  never notifies, and Update and Relaunch is disabled.
+- `UpdateStatusTests` cover which action the sheet offers and when a check
+  may run.
 - The sidebar draws blank in snapshots on macOS 26, so the footer row was not
   seen that way.

@@ -829,3 +829,10 @@ the installed app has no `ReviewSource` until the next `make install`, so no
 real banner has been posted and Update and Relaunch has not run for real; the
 sidebar row was not seen, as the sidebar draws blank in snapshots. **Tests: 248**
 (the four TypeScriptServerTests failures predate this).
+
+Review follow-up: the phase rules moved out of `Updater` into `UpdateStatus`
+(ReviewKit) so they are tested. Try Again after a failed check re-checks
+instead of installing; the sheet no longer says "up to date" before a check has
+answered, and a missing git is a failed check; the hourly check leaves a failed
+install's log in place; a scripted launch cannot install. Sheet re-checked by
+snapshot. **Tests: 257** (same TypeScriptServerTests failures).

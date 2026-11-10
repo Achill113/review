@@ -6,7 +6,7 @@ struct UpdateFooter: View {
     @Environment(AppModel.self) private var model
 
     var body: some View {
-        if let update = model.updater.update {
+        if let update = model.updater.status.update {
             Button {
                 model.updater.isSheetShown = true
             } label: {

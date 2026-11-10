@@ -12,19 +12,8 @@ import ReviewProcess
 @Observable
 @MainActor
 final class Updater {
-    enum Phase: Equatable {
-        case idle
-        case checking
-        case installing
-        case checkFailed(String)
-        case installFailed(String)
-    }
-
     private(set) var build = BuildInfo.current
-    private(set) var phase = Phase.idle
-    /// Nil when up to date, or not checked yet.
-    private(set) var update: AvailableUpdate?
-    private(set) var lastChecked: Date?
+    private(set) var status = UpdateStatus()
     var isSheetShown = false
 
     private var environment: ToolEnvironment?
@@ -47,51 +36,64 @@ final class Updater {
         guard canUpdate, polling == nil else { return }
         polling = Task { [weak self] in
             while !Task.isCancelled {
-                await self?.check()
+                await self?.check(.scheduled)
                 try? await Task.sleep(for: Self.checkInterval)
             }
         }
     }
 
     /// A scripted launch checks another build against another checkout, and
-    /// never notifies.
+    /// never notifies or installs.
     func startScripted(environment: ToolEnvironment, build: BuildInfo) async {
         self.environment = environment
         self.build = build
         notifies = false
+        status.canInstall = false
         isSheetShown = true
-        await check()
+        await check(.requested)
     }
 
     /// Check for Updates…: shows the sheet with the answer.
     func checkFromMenu() {
         isSheetShown = true
-        Task { await check() }
+        Task { await check(.requested) }
     }
 
-    func check() async {
-        guard let checker, phase != .checking, phase != .installing else { return }
-        phase = .checking
+    func perform(_ action: UpdateStatus.Action) async {
+        switch action {
+        case .install, .retryInstall: await install()
+        case .retryCheck: await check(.requested)
+        }
+    }
+
+    /// Before startup has the environment this does nothing: `start` checks as soon as it does.
+    func check(_ reason: UpdateStatus.CheckReason) async {
+        guard canUpdate, let environment, status.allowsCheck(reason) else { return }
+        guard let checker = checker(in: environment) else {
+            status.phase = .checkFailed("git was not found, so main could not be fetched.")
+            return
+        }
+        status.phase = .checking
         do {
-            update = try await checker.check()
-            lastChecked = .now
-            phase = .idle
+            status.update = try await checker.check()
+            status.hasChecked = true
+            status.phase = .idle
             notifyIfNew()
         } catch {
-            phase = .checkFailed("\(error)")
+            status.phase = .checkFailed("\(error)")
         }
     }
 
     /// Builds origin/main, then quits; the script installs the build and
     /// opens it once this process has gone.
     func install() async {
-        guard let installer, phase != .installing else { return }
-        phase = .installing
+        guard status.canInstall, let installer, status.phase != .installing else { return }
+        status.phase = .installing
         do {
             try await installer.install(quittingFor: ProcessInfo.processInfo.processIdentifier)
             NSApp.terminate(nil)
         } catch {
-            phase = .installFailed(error.logTail.isEmpty ? "The build exited with status \(error.status)." : error.logTail)
+            status.phase = .installFailed(error.logTail.isEmpty ? "The build exited with status \(error.status)." : error.logTail)
         }
     }
 
@@ -101,14 +103,13 @@ final class Updater {
 
     /// Once per new head of main, so an hourly check does not repeat itself.
     private func notifyIfNew() {
-        guard notifies, let update, UserDefaults.standard.string(forKey: Self.notifiedHeadKey) != update.head else { return }
+        guard notifies, let update = status.update, UserDefaults.standard.string(forKey: Self.notifiedHeadKey) != update.head else { return }
         UserDefaults.standard.set(update.head, forKey: Self.notifiedHeadKey)
         SystemNotifier.post(update)
     }
 
-    private var checker: UpdateChecker? {
-        guard let environment, let source = build.source, let commit = build.commit,
-              let git = environment.locate(Tool.git.executableName)
+    private func checker(in environment: ToolEnvironment) -> UpdateChecker? {
+        guard let source = build.source, let commit = build.commit, let git = environment.locate(Tool.git.executableName)
         else { return nil }
         let client = GitClient(git: git, gh: environment.locate(Tool.gh.executableName), environment: environment.variables)
         return UpdateChecker(git: client, source: source, installed: commit)

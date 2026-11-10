@@ -37,7 +37,8 @@ import ReviewKit
 ///   line and UTF-16 column, once the servers are ready.
 /// - `--update-source <checkout> --update-commit <sha>` checks that checkout
 ///   for commits on origin/main since that one, as the installed copy does,
-///   and shows the update sheet. It never notifies or installs by itself.
+///   and shows the update sheet. It never notifies, and its install button
+///   is disabled.
 /// - `--find <text>` opens the code view's find bar searching for the text and
 ///   selects the first match. It sets the system-wide find pasteboard, as ⌘E does.
 ///
