@@ -762,3 +762,12 @@ Whole File to reach a hidden line, or to Diff for a base-side thread. Whole
 File is never remembered. A jump to a hidden line now falls back to Whole
 File from Split as well as from Diff. Checked by snapshot with `diffLayout`
 set to `split` and no `--mode`. **Tests: 233.**
+
+## Space between files in the all-files view
+
+Each file heading after the first has `Theme.Code.fileSpacing` (24pt, scaled
+with zoom) of blank space above it, as `paragraphSpacingBefore`.
+`CodeTextView.visibleRows` trims that space off the row's rect, so the
+heading's band, the gutter and badges stay one row tall. A click in the gap
+does not fold the file. AppKit layout in the app target has no test target,
+so this was checked by snapshot (`--continuous on`).

@@ -184,6 +184,8 @@ enum Theme {
         /// Extra leading between lines; diff bands cover it, so they stay
         /// continuous.
         static var lineSpacing: CGFloat { scaled(2) }
+        /// Blank space above each file's heading in the all-files view, so files read as separate.
+        static var fileSpacing: CGFloat { scaled(24) }
         static var textInset: NSSize { NSSize(width: scaled(6), height: scaled(6)) }
         static var gutterPadding: CGFloat { scaled(8) }
         /// The leftmost gutter column, where a draft's bubble sits.
