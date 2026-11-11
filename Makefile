@@ -146,10 +146,10 @@ build/AppIconDev.icns: $(ICON_SCRIPT)
 icon: $(APP_ICON)
 
 build: deps $(APP_ICON)
-	SIGN_IDENTITY="$(DEV_IDENTITY)" PROVISION_PROFILE="$(PROVISION_PROFILE)" VERSION="$(VERSION)" VARIANT="$(VARIANT)" COMMIT="$(COMMIT)" ./build.sh $(CONFIG)
+	SIGN_IDENTITY="$(DEV_IDENTITY)" PROVISION_PROFILE="$(PROVISION_PROFILE)" VERSION="$(VERSION)" VARIANT="$(VARIANT)" COMMIT="$(COMMIT)" SOURCE="$(SOURCE)" ./build.sh $(CONFIG)
 
 release: deps $(APP_ICON)
-	SIGN_IDENTITY="$(DEV_IDENTITY)" PROVISION_PROFILE="$(PROVISION_PROFILE)" VERSION="$(VERSION)" VARIANT="$(VARIANT)" COMMIT="$(COMMIT)" ./build.sh release
+	SIGN_IDENTITY="$(DEV_IDENTITY)" PROVISION_PROFILE="$(PROVISION_PROFILE)" VERSION="$(VERSION)" VARIANT="$(VARIANT)" COMMIT="$(COMMIT)" SOURCE="$(SOURCE)" ./build.sh release
 
 # SwiftUI is a system framework, so nothing structurally stops `import SwiftUI`
 # from appearing in ReviewLSP. Grep for it: the whole point of the layering

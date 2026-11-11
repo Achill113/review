@@ -1,5 +1,6 @@
 import AppKit
 import ReviewCore
+import ReviewKit
 import UserNotifications
 
 /// Shows notification records as macOS notifications. Every record is also
@@ -34,6 +35,32 @@ enum SystemNotifier {
             }
         }
     }
+
+    /// Not a `NotificationRecord`: it is about the app, not a pull request,
+    /// so it stays out of the panel. Clicking it opens the update sheet.
+    static func post(_ update: AvailableUpdate) {
+        let content = UNMutableNotificationContent()
+        content.title = "A new version of \(AppVariant.current.appName) is available"
+        content.body = switch update.commits.count {
+        case 0: "main has moved on. Click to update."
+        case 1: "1 new commit on main: \(update.commits[0].subject)"
+        default: "\(update.commits.count) new commits on main, latest: \(update.commits[0].subject)"
+        }
+        content.sound = .default
+        content.userInfo = [updateKey: update.head]
+        let request = UNNotificationRequest(identifier: updateKey, content: content, trigger: nil)
+        Task {
+            let center = UNUserNotificationCenter.current()
+            guard (try? await center.requestAuthorization(options: [.alert, .sound])) == true else { return }
+            do {
+                try await center.add(request)
+            } catch {
+                NSLog("Review: update notification not shown: \(error)")
+            }
+        }
+    }
+
+    nonisolated static let updateKey = "update"
 
     /// Whether macOS will show them; `UNNotificationSettings` itself is not
     /// `Sendable`, so only its status leaves here.

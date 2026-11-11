@@ -27,6 +27,7 @@ final class AppModel {
         didSet { didChangeShownSession() }
     }
     let browser = PullRequestBrowser()
+    let updater = Updater()
     private var sessions: [PullRequestReference: ReviewSession] = [:]
     private var startup: Task<Void, Never>?
 
@@ -82,6 +83,7 @@ final class AppModel {
                 await checkTools()
                 await refresh()
                 startPolling()
+                if !isScripted { updater.start(environment: services.environment) }
             }
         }
         await startup?.value
@@ -98,6 +100,9 @@ final class AppModel {
             if let keywords = options.searchKeywords { browser.filter.keywords = keywords }
         }
         if options.showsNotifications { isNotificationsShown = true }
+        if let build = options.updateBuild, let services {
+            await updater.startScripted(environment: services.environment, build: build)
+        }
         guard let pullRequest = options.pullRequest, (try? open(pullRequest)) != nil, let selected = selectedSession else {
             if let snapshotPath = options.snapshotPath {
                 try? await Task.sleep(for: .seconds(4))

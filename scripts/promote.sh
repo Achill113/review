@@ -13,6 +13,9 @@
 # Environment:
 #   PROMOTE_WORKTREE  where main is built (default ~/Library/Caches/Review/promote)
 #   PROMOTE_REF       what to build (default origin/main)
+#   PROMOTE_WAIT_PID  set by the app's Update button: instead of asking Review
+#                     to quit, touch PROMOTE_READY_FILE once built and wait for
+#                     this process to exit. The app quits itself on that cue.
 #
 set -euo pipefail
 
@@ -39,7 +42,7 @@ fi
 COMMIT="$(git -C "$WORKTREE" rev-parse --short HEAD)"
 echo "→ building $COMMIT ($(git -C "$WORKTREE" log -1 --format=%s))"
 
-make -C "$WORKTREE" release VARIANT=installed COMMIT="$COMMIT"
+make -C "$WORKTREE" release VARIANT=installed COMMIT="$COMMIT" SOURCE="$REPO"
 BUILT="$WORKTREE/build/Review.app"
 [ -d "$BUILT" ] || { echo "✗ $BUILT missing — build failed?" >&2; exit 1; }
 
@@ -48,7 +51,18 @@ BUILT="$WORKTREE/build/Review.app"
 # its name and bundle id, and are what you would be switching away from.
 # Review Dev.app is left running.
 running() { pgrep -qf "/Review\.app/Contents/MacOS/ReviewApp"; }
-if running; then
+if [ -n "${PROMOTE_WAIT_PID:-}" ]; then
+	echo "→ waiting for Review to quit"
+	touch "$PROMOTE_READY_FILE"
+	for _ in $(seq 600); do
+		kill -0 "$PROMOTE_WAIT_PID" 2>/dev/null || break
+		sleep 0.5
+	done
+	if kill -0 "$PROMOTE_WAIT_PID" 2>/dev/null; then
+		echo "✗ Review did not quit within five minutes; the update was not installed." >&2
+		exit 1
+	fi
+elif running; then
 	echo "→ quitting the running Review"
 	osascript -e "tell application id \"$BUNDLE_ID\" to quit" >/dev/null 2>&1 || true
 	for _ in $(seq 50); do

@@ -10,6 +10,7 @@ struct RootView: View {
 
     var body: some View {
         @Bindable var model = model
+        @Bindable var updater = model.updater
 
         NavigationSplitView(columnVisibility: $columnVisibility) {
             List(selection: $model.sidebarSelection) {
@@ -85,7 +86,10 @@ struct RootView: View {
                 OpenPullRequestField()
             }
             .safeAreaInset(edge: .bottom, spacing: 0) {
-                ToolStatusFooter()
+                VStack(spacing: 0) {
+                    UpdateFooter()
+                    ToolStatusFooter()
+                }
             }
         } content: {
             if model.isBrowsing {
@@ -127,6 +131,9 @@ struct RootView: View {
         .navigationSubtitle(subtitle)
         .focusedSceneValue(\.reviewSession, model.shownSession)
         .onOpenURL { model.handle($0) }
+        .sheet(isPresented: $updater.isSheetShown) {
+            UpdateSheet()
+        }
         .task {
             let options = LaunchOptions.current
             if options.showsSidebar { columnVisibility = .all }

@@ -30,6 +30,7 @@ struct ReviewApp: App {
         .commands {
             CommandGroup(replacing: .appInfo) {
                 Button("About \(AppVariant.current.appName)") { AboutPanel.show() }
+                Button("Check for Updates…") { model.updater.checkFromMenu() }
             }
             FindCommands()
             ReviewCommands(model: model)
