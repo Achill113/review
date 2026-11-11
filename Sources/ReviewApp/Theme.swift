@@ -41,8 +41,10 @@ enum Theme {
     static let windowDefaultHeight: CGFloat = 860
 
     // MARK: Sidebar
-    static var sidebarMinWidth: CGFloat { scaled(220) }
-    static var sidebarIdealWidth: CGFloat { scaled(260) }
+    /// Unzoomed toolbar items need this much, or the bell overflows into » and its popover can't anchor.
+    static let sidebarToolbarWidth: CGFloat = 280
+    static var sidebarMinWidth: CGFloat { max(sidebarToolbarWidth, scaled(220)) }
+    static var sidebarIdealWidth: CGFloat { max(sidebarToolbarWidth, scaled(260)) }
     static var sidebarMaxWidth: CGFloat { scaled(360) }
     /// Wide enough for an install command to sit on one line.
     static var toolPopoverWidth: CGFloat { scaled(380) }
