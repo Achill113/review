@@ -60,8 +60,10 @@ login-shell environment plus:
   Automation permission.
 - `PROMOTE_READY_FILE` — touched once the build is done.
 
-The installer returns when the ready file appears, and the app calls
-`NSApp.terminate`. promote.sh waits up to five minutes for the pid to exit, then
+The installer returns when the ready file appears, and the app closes the
+update sheet, waits for it to go, then calls `NSApp.terminate` — AppKit ignores
+`terminate` while a sheet is attached. If it returns anyway, the sheet comes
+back with "did not quit". promote.sh waits up to five minutes for the pid to exit, then
 replaces `/Applications/Review.app` and opens it. If the build fails first, the
 script exits non-zero and the sheet shows the end of the log, with Try Again.
 

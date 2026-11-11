@@ -91,10 +91,23 @@ final class Updater {
         status.phase = .installing
         do {
             try await installer.install(quittingFor: ProcessInfo.processInfo.processIdentifier)
-            NSApp.terminate(nil)
         } catch {
             status.phase = .installFailed(error.logTail.isEmpty ? "The build exited with status \(error.status)." : error.logTail)
+            return
         }
+        await quit()
+    }
+
+    /// AppKit ignores `terminate` while a sheet is attached, and Update and Relaunch is in one.
+    private func quit() async {
+        isSheetShown = false
+        for _ in 0..<40 where NSApp.windows.contains(where: { $0.attachedSheet != nil }) {
+            try? await Task.sleep(for: .milliseconds(50))
+        }
+        NSApp.terminate(nil)
+        let name = AppVariant.current.appName
+        status.phase = .installFailed("\(name) did not quit. The new build installs if you quit \(name) within five minutes.")
+        isSheetShown = true
     }
 
     func showLog() {
