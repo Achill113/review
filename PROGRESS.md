@@ -845,3 +845,15 @@ read row it shows on hover and marks it unread. The open button and the mark
 button are siblings, not nested, so a click on one never triggers the other.
 Checked by snapshot (`--notifications on`): the button shows on each unread
 row. Clicking it was not exercised in a scripted run.
+## Collapsible drafts
+
+A draft card in the inspector folds to one line — a chevron beside its
+location, or Collapse/Expand in its context menu — for drafts the reviewer is
+done with for now. Folded, it shows the note's first line and how many times
+Claude replied, and keeps its **Keep private** checkbox, so a draft can be
+folded and kept out of the review in one place. Folding is presentation only: a
+folded draft still posts unless it is kept private. `DraftComment.isCollapsed`
+is saved with the notes (older files load as open) and does not touch
+`updatedAt`. Selecting a folded draft from its gutter marker or a notification
+opens it, as threads do. Checked by snapshot with one folded private draft and
+one open. **Tests: 257.**

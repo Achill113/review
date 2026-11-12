@@ -14,6 +14,9 @@ public struct DraftComment: Codable, Hashable, Sendable, Identifiable {
     public var claudeSessionID: String?
     /// Kept private when the review is posted.
     public var isExcludedFromReview: Bool
+    /// Folded to one line in the drafts panel: the reviewer is done with it
+    /// for now. Only how it is shown — a collapsed draft still posts.
+    public var isCollapsed: Bool
     /// Set once the draft has gone to GitHub.
     public var posted: Posted?
 
@@ -36,6 +39,7 @@ public struct DraftComment: Codable, Hashable, Sendable, Identifiable {
         updatedAt = date
         conversation = []
         isExcludedFromReview = false
+        isCollapsed = false
     }
 
     // Written out so files saved before a field existed still load.
@@ -49,6 +53,7 @@ public struct DraftComment: Codable, Hashable, Sendable, Identifiable {
         conversation = try container.decodeIfPresent([ConversationTurn].self, forKey: .conversation) ?? []
         claudeSessionID = try container.decodeIfPresent(String.self, forKey: .claudeSessionID)
         isExcludedFromReview = try container.decodeIfPresent(Bool.self, forKey: .isExcludedFromReview) ?? false
+        isCollapsed = try container.decodeIfPresent(Bool.self, forKey: .isCollapsed) ?? false
         posted = try container.decodeIfPresent(Posted.self, forKey: .posted)
     }
 }

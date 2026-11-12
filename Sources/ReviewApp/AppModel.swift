@@ -350,7 +350,9 @@ final class AppModel {
         open(reference)
         guard let session = session(for: reference) else { return }
         session.isInspectorShown = true
-        if let draft { session.selectedDraftID = draft }
+        guard let draft else { return }
+        session.selectedDraftID = draft
+        session.expand(draftID: draft)
     }
 
     // MARK: Open pull requests across launches
