@@ -23,6 +23,7 @@ struct NotesAndPromptsTests {
         var draft = DraftComment(anchor: anchor, body: "what the hell is this")
         draft.conversation = [ConversationTurn(author: .claude, text: "It rejects duplicates.", costUSD: 0.04)]
         draft.claudeSessionID = "session-1"
+        draft.isCollapsed = true
         try store.save(ReviewNotes(drafts: [draft]), for: reference)
 
         let loaded = try store.load(reference)
@@ -31,6 +32,7 @@ struct NotesAndPromptsTests {
         #expect(loaded.drafts.first?.anchor == anchor)
         #expect(loaded.drafts.first?.claudeSessionID == "session-1")
         #expect(loaded.drafts.first?.conversation.first?.costUSD == 0.04)
+        #expect(loaded.drafts.first?.isCollapsed == true)
         #expect(store.file(for: reference).path.hasSuffix("reviews/spf13/cobra/2397.json"))
     }
 

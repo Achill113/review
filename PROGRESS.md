@@ -836,3 +836,16 @@ instead of installing; the sheet no longer says "up to date" before a check has
 answered, and a missing git is a failed check; the hourly check leaves a failed
 install's log in place; a scripted launch cannot install. Sheet re-checked by
 snapshot. **Tests: 257** (same TypeScriptServerTests failures).
+
+## Collapsible drafts
+
+A draft card in the inspector folds to one line — a chevron beside its
+location, or Collapse/Expand in its context menu — for drafts the reviewer is
+done with for now. Folded, it shows the note's first line and how many times
+Claude replied, and keeps its **Keep private** checkbox, so a draft can be
+folded and kept out of the review in one place. Folding is presentation only: a
+folded draft still posts unless it is kept private. `DraftComment.isCollapsed`
+is saved with the notes (older files load as open) and does not touch
+`updatedAt`. Selecting a folded draft from its gutter marker or a notification
+opens it, as threads do. Checked by snapshot with one folded private draft and
+one open. **Tests: 257.**
