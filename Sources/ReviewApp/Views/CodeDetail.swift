@@ -133,6 +133,7 @@ struct CodeDetail: View {
             onAddComment: { session.addDraft() },
             onSelectDraft: { id in
                 session.selectedDraftID = id
+                session.expand(draftID: id)
                 session.isInspectorShown = true
             },
             onSelectThread: { id in

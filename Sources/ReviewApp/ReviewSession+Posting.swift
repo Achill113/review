@@ -76,6 +76,21 @@ extension ReviewSession {
         scheduleSave()
     }
 
+    /// Folds a draft to one line, or opens it. Not an edit, so `updatedAt`
+    /// stays put.
+    func setCollapsed(_ isCollapsed: Bool, _ id: UUID) {
+        guard let index = notes.drafts.firstIndex(where: { $0.id == id }) else { return }
+        notes.drafts[index].isCollapsed = isCollapsed
+        scheduleSave()
+    }
+
+    /// Selecting a collapsed draft from outside the panel — its marker in the
+    /// code, a notification — opens it.
+    func expand(draftID: UUID) {
+        guard draft(draftID)?.isCollapsed == true else { return }
+        setCollapsed(false, draftID)
+    }
+
     /// Records a successful post on every draft that went out in it.
     func didPost(_ plan: ReviewPlan, url: URL?) {
         let posted = DraftComment.Posted(date: .now, reviewURL: url)
