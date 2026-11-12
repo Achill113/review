@@ -24,13 +24,12 @@ struct NotificationsPanel: View {
             } else {
                 List {
                     ForEach(records) { record in
-                        Button {
+                        NotificationListItem(record: record) {
                             model.isNotificationsShown = false
                             model.open(record)
-                        } label: {
-                            NotificationRow(record: record)
+                        } setRead: { isRead in
+                            model.setRead(isRead, id: record.id)
                         }
-                        .buttonStyle(.plain)
                         .contextMenu { menu(for: record) }
                         .listRowSeparator(.hidden)
                     }

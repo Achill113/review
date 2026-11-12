@@ -48,7 +48,10 @@ read too; the kind is inferred from the wording. Deleting or clearing in the
 panel removes the banners from Notification Center as well, so they do not
 come back. A failed save is logged with `NSLog`, not swallowed.
 
-A row opens what it is about, as its banner does, and marks it read. A banner
+A row opens what it is about, as its banner does, and marks it read. A
+checkmark button at the row's trailing edge marks it read without opening it
+(`NotificationListItem`); on a read row it appears on hover and marks it
+unread again. The context menu has the same, plus Open on GitHub and Delete. A banner
 carries its record's ID, so clicking one marks the row read too. Claude's
 answers are recorded only when they would notify: an answer the reviewer is
 already watching is not a notification. `--notifications on` opens the panel

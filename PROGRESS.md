@@ -837,6 +837,14 @@ answered, and a missing git is a failed check; the hourly check leaves a failed
 install's log in place; a scripted launch cannot install. Sheet re-checked by
 snapshot. **Tests: 257** (same TypeScriptServerTests failures).
 
+## Notifications: mark read from the panel
+
+Each notification row now has a checkmark button at its trailing edge that
+marks it read without opening the pull request (`NotificationListItem`). On a
+read row it shows on hover and marks it unread. The open button and the mark
+button are siblings, not nested, so a click on one never triggers the other.
+Checked by snapshot (`--notifications on`): the button shows on each unread
+row. Clicking it was not exercised in a scripted run.
 ## Collapsible drafts
 
 A draft card in the inspector folds to one line — a chevron beside its
