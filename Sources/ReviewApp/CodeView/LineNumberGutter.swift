@@ -26,6 +26,11 @@ final class LineNumberGutter: NSRulerView {
     init(textView: CodeTextView) {
         super.init(scrollView: textView.enclosingScrollView, orientation: .verticalRuler)
         clientView = textView
+        // A row scrolled partly above the top is still drawn, at a negative y.
+        // The code's clip view hides the rest of that row; the ruler sits
+        // outside the clip view and, since macOS 14, does not clip by default,
+        // so its numbers would paint over the file header above.
+        clipsToBounds = true
     }
 
     @available(*, unavailable)
