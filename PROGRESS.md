@@ -857,3 +857,13 @@ is saved with the notes (older files load as open) and does not touch
 `updatedAt`. Selecting a folded draft from its gutter marker or a notification
 opens it, as threads do. Checked by snapshot with one folded private draft and
 one open. **Tests: 257.**
+
+## Fix: line numbers drawn over the file header
+
+Scrolled so a row sat partly above the code's top edge, the gutter drew that
+row's numbers over the file header above it, covering the start of the path.
+The text is clipped by its `NSClipView`; the gutter is an `NSRulerView` beside
+the clip view, and since macOS 14 views do not clip to their bounds by default.
+`LineNumberGutter` now sets `clipsToBounds`. Checked by snapshot with the view
+scrolled to leave a row straddling the top: before, its numbers overhung the
+header; after, they are cut at the same edge as the text.
